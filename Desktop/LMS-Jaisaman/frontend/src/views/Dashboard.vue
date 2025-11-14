@@ -53,6 +53,16 @@
           <Award :size="20" />
           <span class="font-medium">ใบประกาศนียบัตร</span>
         </router-link>
+
+        <!-- Calendar -->
+        <router-link
+          to="/dashboard/calendar"
+          class="flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200"
+          :class="currentRoute === 'calendar' ? 'bg-gradient-to-r from-primary to-orange-600 text-white' : 'text-gray-700 hover:bg-gray-100'"
+        >
+          <Calendar :size="20" />
+          <span class="font-medium">ปฏิทิน</span>
+        </router-link>
       </nav>
 
       <!-- Bottom Menu -->

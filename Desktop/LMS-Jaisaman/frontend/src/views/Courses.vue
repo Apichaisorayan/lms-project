@@ -28,6 +28,10 @@
           <Award :size="20" />
           <span class="font-medium">ใบประกาศนียบัตร</span>
         </router-link>
+        <router-link to="/dashboard/calendar" class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100 transition-all duration-200">
+          <Calendar :size="20" />
+          <span class="font-medium">ปฏิทิน</span>
+        </router-link>
       </nav>
 
       <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 space-y-2">
@@ -221,6 +225,7 @@ import {
   BookOpen,
   Users,
   Award,
+  Calendar,
   Settings,
   LogOut,
   Plus,

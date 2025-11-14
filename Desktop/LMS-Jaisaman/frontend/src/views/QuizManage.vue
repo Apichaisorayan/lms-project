@@ -178,43 +178,6 @@
 
                 <!-- Choices for multiple choice -->
                 <div v-if="question.type === 'multiple_choice'" class="space-y-2 mt-3">
-                  <div class="flex justify-between items-center mb-2">
-                    <span class="text-sm font-medium text-gray-600">Answer Choices</span>
-                    <button
-                      @click="addChoice(qIndex)"
-                      class="text-orange-600 hover:text-orange-700 text-sm font-medium"
-                    >
-                      + Add Choice
-                    </button>
-                  </div>
-                  <div
-                    v-for="(choice, cIndex) in question.choices"
-                    :key="cIndex"
-                    class="flex items-center gap-2"
-                  >
-                    <input
-                      type="radio"
-                      :name="`correct-${qIndex}`"
-                      :checked="choice.isCorrect"
-                      @change="setCorrectChoice(qIndex, cIndex)"
-                      class="w-4 h-4 text-orange-600 focus:ring-orange-500"
-                    />
-                    <input
-                      v-model="choice.text"
-                      type="text"
-                      class="flex-1 p-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                      placeholder="Choice text"
-                    />
-                    <button
-                      @click="removeChoice(qIndex, cIndex)"
-                      class="text-gray-400 hover:text-red-500 transition-colors"
-                    >
-                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    </button>
-                  </div>
-                </div>
                   <div class="flex justify-between items-center mb-3">
                     <span class="text-sm font-semibold text-gray-700">ตัวเลือกคำตอบ</span>
                     <button

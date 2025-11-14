@@ -24,6 +24,7 @@ model User {
   progress     Progress[]
   certificates Certificate[]
   quizAttempts QuizAttempt[]
+  bookings     Booking[]
 
   @@unique([provider, providerId])
 }
@@ -184,4 +185,36 @@ model Answer {
   attempt    QuizAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
   questionId String
   question   Question    @relation(fields: [questionId], references: [id])
+}
+
+model Room {
+  id          String   @id @default(uuid())
+  name        String
+  capacity    Int
+  location    String?
+  description String?
+  facilities  String?  // JSON string for amenities like projector, whiteboard, etc.
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  bookings    Booking[]
+}
+
+model Booking {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  startTime   DateTime
+  endTime     DateTime
+  status      String   @default("confirmed") // confirmed, cancelled
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  roomId      String
+  room        Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@index([roomId, startTime, endTime])
 }

@@ -1361,6 +1361,349 @@ app.delete('/api/resources/:id', authenticateToken, async (req, res) => {
   }
 });
 
+// ==================== ROOM ROUTES ====================
+
+// Get all rooms (public)
+app.get('/api/rooms', async (req, res) => {
+  try {
+    const rooms = await prisma.room.findMany({
+      where: { isActive: true },
+      orderBy: { name: 'asc' }
+    });
+    res.json(rooms);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get single room
+app.get('/api/rooms/:id', async (req, res) => {
+  try {
+    const room = await prisma.room.findUnique({
+      where: { id: req.params.id },
+      include: {
+        bookings: {
+          where: {
+            status: 'confirmed',
+            endTime: { gte: new Date() }
+          },
+          orderBy: { startTime: 'asc' }
+        }
+      }
+    });
+    
+    if (!room) {
+      return res.status(404).json({ error: 'Room not found' });
+    }
+    
+    res.json(room);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Create room (admin only)
+app.post('/api/rooms', authenticateToken, authorizeRole('ADMIN'), async (req, res) => {
+  try {
+    const { name, capacity, location, description, facilities } = req.body;
+    
+    const room = await prisma.room.create({
+      data: {
+        name,
+        capacity: parseInt(capacity),
+        location,
+        description,
+        facilities
+      }
+    });
+    
+    res.status(201).json(room);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Update room (admin only)
+app.put('/api/rooms/:id', authenticateToken, authorizeRole('ADMIN'), async (req, res) => {
+  try {
+    const { name, capacity, location, description, facilities, isActive } = req.body;
+    
+    const room = await prisma.room.update({
+      where: { id: req.params.id },
+      data: {
+        name,
+        capacity: capacity ? parseInt(capacity) : undefined,
+        location,
+        description,
+        facilities,
+        isActive
+      }
+    });
+    
+    res.json(room);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Delete room (admin only)
+app.delete('/api/rooms/:id', authenticateToken, authorizeRole('ADMIN'), async (req, res) => {
+  try {
+    await prisma.room.delete({
+      where: { id: req.params.id }
+    });
+    
+    res.json({ message: 'Room deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ==================== BOOKING ROUTES ====================
+
+// Helper function to check room availability
+async function checkRoomAvailability(roomId, startTime, endTime, excludeBookingId = null) {
+  const start = new Date(startTime);
+  const end = new Date(endTime);
+  
+  const conflictingBookings = await prisma.booking.findMany({
+    where: {
+      roomId,
+      status: 'confirmed',
+      id: excludeBookingId ? { not: excludeBookingId } : undefined,
+      OR: [
+        {
+          AND: [
+            { startTime: { lte: start } },
+            { endTime: { gt: start } }
+          ]
+        },
+        {
+          AND: [
+            { startTime: { lt: end } },
+            { endTime: { gte: end } }
+          ]
+        },
+        {
+          AND: [
+            { startTime: { gte: start } },
+            { endTime: { lte: end } }
+          ]
+        }
+      ]
+    }
+  });
+  
+  return conflictingBookings.length === 0;
+}
+
+// Get all bookings (with filters)
+app.get('/api/bookings', authenticateToken, async (req, res) => {
+  try {
+    const { roomId, startDate, endDate, userId } = req.query;
+    
+    const where = {
+      status: 'confirmed'
+    };
+    
+    if (roomId) where.roomId = roomId;
+    if (userId) where.userId = userId;
+    
+    if (startDate && endDate) {
+      where.AND = [
+        { startTime: { gte: new Date(startDate) } },
+        { endTime: { lte: new Date(endDate) } }
+      ];
+    }
+    
+    const bookings = await prisma.booking.findMany({
+      where,
+      include: {
+        user: {
+          select: { id: true, name: true, email: true }
+        },
+        room: true
+      },
+      orderBy: { startTime: 'asc' }
+    });
+    
+    res.json(bookings);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get user's bookings
+app.get('/api/bookings/my-bookings', authenticateToken, async (req, res) => {
+  try {
+    const bookings = await prisma.booking.findMany({
+      where: {
+        userId: req.user.id,
+        status: 'confirmed'
+      },
+      include: {
+        room: true
+      },
+      orderBy: { startTime: 'desc' }
+    });
+    
+    res.json(bookings);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Create booking
+app.post('/api/bookings', authenticateToken, async (req, res) => {
+  try {
+    const { roomId, title, description, startTime, endTime } = req.body;
+    
+    // Validate times
+    const start = new Date(startTime);
+    const end = new Date(endTime);
+    const now = new Date();
+    
+    if (start < now) {
+      return res.status(400).json({ error: 'Cannot book in the past' });
+    }
+    
+    if (end <= start) {
+      return res.status(400).json({ error: 'End time must be after start time' });
+    }
+    
+    // Check room exists
+    const room = await prisma.room.findUnique({
+      where: { id: roomId }
+    });
+    
+    if (!room || !room.isActive) {
+      return res.status(404).json({ error: 'Room not found or inactive' });
+    }
+    
+    // Check availability
+    const isAvailable = await checkRoomAvailability(roomId, start, end);
+    
+    if (!isAvailable) {
+      return res.status(409).json({ error: 'Room is not available for the selected time' });
+    }
+    
+    // Create booking
+    const booking = await prisma.booking.create({
+      data: {
+        title,
+        description,
+        startTime: start,
+        endTime: end,
+        userId: req.user.id,
+        roomId
+      },
+      include: {
+        room: true,
+        user: {
+          select: { id: true, name: true, email: true }
+        }
+      }
+    });
+    
+    res.status(201).json(booking);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Update booking
+app.put('/api/bookings/:id', authenticateToken, async (req, res) => {
+  try {
+    const { title, description, startTime, endTime } = req.body;
+    
+    // Check if booking exists and user owns it
+    const existingBooking = await prisma.booking.findUnique({
+      where: { id: req.params.id }
+    });
+    
+    if (!existingBooking) {
+      return res.status(404).json({ error: 'Booking not found' });
+    }
+    
+    if (existingBooking.userId !== req.user.id && req.user.role !== 'ADMIN') {
+      return res.status(403).json({ error: 'Not authorized to update this booking' });
+    }
+    
+    // Validate times if provided
+    if (startTime && endTime) {
+      const start = new Date(startTime);
+      const end = new Date(endTime);
+      const now = new Date();
+      
+      if (start < now) {
+        return res.status(400).json({ error: 'Cannot book in the past' });
+      }
+      
+      if (end <= start) {
+        return res.status(400).json({ error: 'End time must be after start time' });
+      }
+      
+      // Check availability
+      const isAvailable = await checkRoomAvailability(
+        existingBooking.roomId,
+        start,
+        end,
+        req.params.id
+      );
+      
+      if (!isAvailable) {
+        return res.status(409).json({ error: 'Room is not available for the selected time' });
+      }
+    }
+    
+    const booking = await prisma.booking.update({
+      where: { id: req.params.id },
+      data: {
+        title,
+        description,
+        startTime: startTime ? new Date(startTime) : undefined,
+        endTime: endTime ? new Date(endTime) : undefined
+      },
+      include: {
+        room: true,
+        user: {
+          select: { id: true, name: true, email: true }
+        }
+      }
+    });
+    
+    res.json(booking);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Delete/Cancel booking
+app.delete('/api/bookings/:id', authenticateToken, async (req, res) => {
+  try {
+    const booking = await prisma.booking.findUnique({
+      where: { id: req.params.id }
+    });
+    
+    if (!booking) {
+      return res.status(404).json({ error: 'Booking not found' });
+    }
+    
+    if (booking.userId !== req.user.id && req.user.role !== 'ADMIN') {
+      return res.status(403).json({ error: 'Not authorized to delete this booking' });
+    }
+    
+    await prisma.booking.update({
+      where: { id: req.params.id },
+      data: { status: 'cancelled' }
+    });
+    
+    res.json({ message: 'Booking cancelled successfully' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // ==================== ERROR HANDLING ====================
 
 app.use((req, res) => {

@@ -59,7 +59,7 @@
         <!-- Lessons List -->
         <div v-else class="space-y-4">
           <div
-            v-for="(lesson, index) in lessons"
+            v-for="(lesson) in lessons"
             :key="lesson.id"
             class="bg-white rounded-xl p-6 border border-gray-200 hover:shadow-lg transition-all duration-300"
           >

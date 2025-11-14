@@ -5,13 +5,13 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-// Google Strategy
+// Google OAuth Strategy
 passport.use(
   new GoogleStrategy(
     {
       clientID: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: process.env.GOOGLE_CALLBACK_URL,
+      callbackURL: `${process.env.API_URL}/api/auth/google/callback`,
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
@@ -47,14 +47,14 @@ passport.use(
   )
 );
 
-// Facebook Strategy
+// Facebook OAuth Strategy
 passport.use(
   new FacebookStrategy(
     {
       clientID: process.env.FACEBOOK_APP_ID,
       clientSecret: process.env.FACEBOOK_APP_SECRET,
-      callbackURL: process.env.FACEBOOK_CALLBACK_URL,
-      profileFields: ['id', 'displayName', 'photos', 'email'],
+      callbackURL: `${process.env.API_URL}/api/auth/facebook/callback`,
+      profileFields: ['id', 'displayName', 'emails', 'photos'],
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
@@ -72,11 +72,11 @@ passport.use(
         if (!user) {
           user = await prisma.user.create({
             data: {
-              email: profile.emails[0].value,
+              email: profile.emails?.[0]?.value || `facebook_${profile.id}@example.com`,
               name: profile.displayName,
               provider: 'facebook',
               providerId: profile.id,
-              avatar: profile.photos[0]?.value,
+              avatar: profile.photos?.[0]?.value,
               role: 'STUDENT',
             },
           });
