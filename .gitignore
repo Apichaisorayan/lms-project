@@ -49,11 +49,5 @@ Thumbs.db
 *.temp
 *.log
 
-# Ignore parent directories and other projects
-../
-../../
-Desktop/
-Documents/
-Downloads/
-AppData/
-*.lnk
+# GitHub Actions
+.github/workflows/*.log

@@ -1,12 +1,21 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
-import { jwt } from 'hono/jwt';
 
 const app = new Hono();
 
 // CORS Configuration
 app.use('/*', cors({
-  origin: ['http://localhost:5173', 'http://localhost:3000'],
+  origin: (origin) => {
+    // Allow localhost for development
+    if (!origin || origin.includes('localhost')) return origin;
+    // Allow your production domains
+    const allowedDomains = [
+      'https://apichaisorayan.github.io', // GitHub Pages (ถ้าใช้)
+      'https://learning-platform-frontend.pages.dev', // Cloudflare Pages
+      'https://learning-platform-api.apichailove-student.workers.dev' // Worker URL
+    ];
+    return allowedDomains.some(domain => origin.startsWith(domain)) ? origin : allowedDomains[0];
+  },
   credentials: true,
 }));
 

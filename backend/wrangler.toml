@@ -9,6 +9,7 @@ database_name = "learning_platform"
 database_id = "70f060c2-6c42-495e-afea-79083027371a"
 
 # Environment variables
+# Environment variables - ⚠️ เปลี่ยนค่าเหล่านี้ก่อน deploy!
 [vars]
-IMGBB_API_KEY = "d0c9f5c8c8e8e8e8e8e8e8e8e8e8e8e8"
-JWT_SECRET = "super-secret-jwt-key-change-this-in-production-32chars"
+IMGBB_API_KEY = "d0c9f5c8c8e8e8e8e8e8e8e8e8e8e8e8"  # ⚠️ เปลี่ยนเป็น API key จริง
+JWT_SECRET = "super-secret-jwt-key-change-this-in-production-32chars"  # ⚠️ เปลี่ยนเป็น random string ยาวๆ
