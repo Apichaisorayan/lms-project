@@ -1,0 +1,14 @@
+name = "learning-platform-api"
+main = "src/server.js"
+compatibility_date = "2024-01-01"
+
+# Database
+[[d1_databases]]
+binding = "DB"
+database_name = "learning_platform"
+database_id = "70f060c2-6c42-495e-afea-79083027371a"
+
+# Environment variables
+[vars]
+IMGBB_API_KEY = "d0c9f5c8c8e8e8e8e8e8e8e8e8e8e8e8"
+JWT_SECRET = "super-secret-jwt-key-change-this-in-production-32chars"

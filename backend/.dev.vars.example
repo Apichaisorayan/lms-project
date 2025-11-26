@@ -1,0 +1,8 @@
+# Local Development Environment Variables
+# คัดลอกไฟล์นี้เป็น .dev.vars แล้วกรอกค่าจริง
+
+# ImgBB API Key (สมัครฟรีที่ https://api.imgbb.com/)
+IMGBB_API_KEY=your_imgbb_api_key_here
+
+# JWT Secret (ใช้ random string ยาวๆ อย่างน้อย 32 ตัวอักษร)
+JWT_SECRET=your_super_secret_jwt_key_change_this_in_production_32chars

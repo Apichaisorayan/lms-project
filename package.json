@@ -1,0 +1,28 @@
+{
+  "name": "learning-platform",
+  "version": "1.0.0",
+  "description": "ระบบเรียนออนไลน์แบบครบวงจร",
+  "private": true,
+  "scripts": {
+    "install:all": "cd backend && npm install && cd ../frontend && npm install",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "build:frontend": "cd frontend && npm run build",
+    "deploy:backend": "cd backend && npm run deploy",
+    "deploy:frontend": "cd frontend && npm run build",
+    "deploy": "npm run deploy:backend && npm run deploy:frontend"
+  },
+  "keywords": [
+    "learning",
+    "education",
+    "vue",
+    "cloudflare",
+    "workers"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
