@@ -8,13 +8,21 @@ app.use('/*', cors({
   origin: (origin) => {
     // Allow localhost for development
     if (!origin || origin.includes('localhost')) return origin;
-    // Allow your production domains
+    
+    // Allow Cloudflare Pages (including preview deployments)
+    if (origin && origin.includes('.pages.dev')) return origin;
+    
+    // Allow other production domains
     const allowedDomains = [
-      'https://apichaisorayan.github.io', // GitHub Pages (ถ้าใช้)
-      'https://learning-platform-frontend.pages.dev', // Cloudflare Pages
-      'https://learning-platform-api.apichailove-student.workers.dev' // Worker URL
+      'https://apichaisorayan.github.io',
+      'https://learning-platform-api.apichailove-student.workers.dev'
     ];
-    return allowedDomains.some(domain => origin.startsWith(domain)) ? origin : allowedDomains[0];
+    
+    if (allowedDomains.some(domain => origin && origin.startsWith(domain))) {
+      return origin;
+    }
+    
+    return origin || '*';
   },
   credentials: true,
 }));
