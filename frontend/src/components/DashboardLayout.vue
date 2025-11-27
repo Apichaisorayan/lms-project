@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gray-50">
+  <div class="min-h-screen bg-gray-50 overflow-x-hidden">
     <!-- Mobile Menu Overlay -->
     <div
       v-if="mobileMenuOpen"
@@ -187,6 +187,11 @@ const user = computed(() => {
 })
 
 const isActive = (path) => {
+  // Exact match for dashboard root
+  if (path === '/dashboard') {
+    return route.path === '/dashboard'
+  }
+  // For other paths, check if current path starts with it
   return route.path === path || route.path.startsWith(path + '/')
 }
 
