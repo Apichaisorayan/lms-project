@@ -277,7 +277,7 @@
                     class="w-full flex items-center justify-between p-2 sm:p-3 hover:bg-gray-50 rounded-lg transition-colors"
                   >
                     <span class="font-semibold text-gray-800 text-xs sm:text-sm">{{ section.name }}</span>
-                    <ChevronDown :size="16" class="sm:w-[18px] sm:h-[18px]" :class="{ 'rotate-180': section.expanded }" class="transition-transform text-gray-500" />
+                    <ChevronDown :size="16" class="sm:w-[18px] sm:h-[18px] transition-transform text-gray-500" :class="{ 'rotate-180': section.expanded }" />
                   </button>
 
                   <div v-show="section.expanded" class="space-y-1 mt-1">
