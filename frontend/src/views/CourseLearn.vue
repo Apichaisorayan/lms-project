@@ -2,33 +2,42 @@
   <div class="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
     <!-- Header -->
     <header class="bg-white border-b border-gray-200 sticky top-0 z-30 shadow-sm">
-      <div class="container mx-auto px-4 py-3 flex items-center justify-between">
-        <div class="flex items-center gap-4">
-          <button @click="goBack" class="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-            <ChevronLeft :size="20" />
-          </button>
-          <div>
-            <h1 class="font-semibold text-lg line-clamp-1">{{ course?.title }}</h1>
-            <p class="text-sm text-gray-500">โดย {{ course?.instructor?.name }}</p>
+      <div class="container mx-auto px-3 sm:px-4 py-2 sm:py-3">
+        <div class="flex items-center justify-between gap-2 sm:gap-4">
+          <div class="flex items-center gap-2 sm:gap-4 flex-1 min-w-0">
+            <button @click="goBack" class="p-1.5 sm:p-2 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0">
+              <ChevronLeft :size="20" />
+            </button>
+            <div class="min-w-0 flex-1">
+              <h1 class="font-semibold text-sm sm:text-lg line-clamp-1">{{ course?.title }}</h1>
+              <p class="text-xs sm:text-sm text-gray-500 hidden sm:block">โดย {{ course?.instructor?.name }}</p>
+            </div>
+          </div>
+          <div class="hidden lg:flex items-center gap-3 flex-shrink-0">
+            <span class="text-sm text-gray-600">ความคืบหน้า</span>
+            <div class="w-32 bg-gray-200 rounded-full h-2">
+              <div class="bg-gradient-to-r from-primary to-orange-600 h-2 rounded-full transition-all" :style="{ width: `${progressPercentage}%` }"></div>
+            </div>
+            <span class="text-sm font-medium">{{ progressPercentage }}%</span>
           </div>
         </div>
-        <div class="hidden md:flex items-center gap-3">
-          <span class="text-sm text-gray-600">ความคืบหน้า</span>
-          <div class="w-32 bg-gray-200 rounded-full h-2">
-            <div class="bg-gradient-to-r from-primary to-orange-600 h-2 rounded-full transition-all" :style="{ width: `${progressPercentage}%` }"></div>
+        <!-- Mobile Progress Bar -->
+        <div class="lg:hidden mt-2 flex items-center gap-2">
+          <div class="flex-1 bg-gray-200 rounded-full h-1.5">
+            <div class="bg-gradient-to-r from-primary to-orange-600 h-1.5 rounded-full transition-all" :style="{ width: `${progressPercentage}%` }"></div>
           </div>
-          <span class="text-sm font-medium">{{ progressPercentage }}%</span>
+          <span class="text-xs font-medium text-gray-600 flex-shrink-0">{{ progressPercentage }}%</span>
         </div>
       </div>
     </header>
 
     <!-- Main Content -->
-    <div class="container mx-auto px-4 py-6">
-      <div class="grid lg:grid-cols-[1fr_400px] gap-6">
+    <div class="container mx-auto px-3 sm:px-4 py-3 sm:py-6">
+      <div class="grid lg:grid-cols-[1fr_380px] xl:grid-cols-[1fr_400px] gap-3 sm:gap-6">
         <!-- Video & Content Section -->
-        <div class="space-y-6">
+        <div class="space-y-3 sm:space-y-6">
           <!-- Video Player -->
-          <div class="bg-white rounded-xl overflow-hidden border-2 shadow-sm">
+          <div class="bg-white rounded-lg sm:rounded-xl overflow-hidden border sm:border-2 shadow-sm">
             <div class="relative bg-black aspect-video group">
               <div v-if="currentLesson?.videoUrl" class="w-full h-full">
                 <EnhancedVideoPlayer
@@ -39,82 +48,85 @@
                 />
               </div>
               <div v-else class="absolute inset-0 flex items-center justify-center text-gray-400 bg-gray-900">
-                <div class="text-center">
-                  <ImageIcon :size="64" class="mx-auto mb-4 opacity-50" />
-                  <p>ไม่มีวิดีโอสำหรับบทเรียนนี้</p>
+                <div class="text-center px-4">
+                  <ImageIcon :size="48" class="sm:w-16 sm:h-16 mx-auto mb-3 sm:mb-4 opacity-50" />
+                  <p class="text-sm sm:text-base">ไม่มีวิดีโอสำหรับบทเรียนนี้</p>
                 </div>
               </div>
             </div>
           </div>
 
           <!-- Lesson Info -->
-          <div class="bg-white rounded-xl border-2 shadow-sm">
-            <div class="p-6">
-              <div class="flex items-start justify-between gap-4 mb-4">
-                <div class="flex-1">
-                  <div class="flex items-center gap-2 mb-2">
-                    <span class="px-3 py-1 border border-gray-300 text-gray-700 text-sm font-medium rounded-full">
+          <div class="bg-white rounded-lg sm:rounded-xl border sm:border-2 shadow-sm">
+            <div class="p-4 sm:p-6">
+              <div class="flex flex-col sm:flex-row items-start justify-between gap-3 sm:gap-4 mb-4">
+                <div class="flex-1 w-full">
+                  <div class="flex flex-wrap items-center gap-2 mb-2">
+                    <span class="px-2 sm:px-3 py-1 border border-gray-300 text-gray-700 text-xs sm:text-sm font-medium rounded-full">
                       บทที่ {{ currentLesson?.order }}
                     </span>
-                    <span class="px-3 py-1 bg-blue-100 text-blue-700 text-sm font-medium rounded-full">
+                    <span class="px-2 sm:px-3 py-1 bg-blue-100 text-blue-700 text-xs sm:text-sm font-medium rounded-full">
                       JavaScript
                     </span>
                   </div>
-                  <h2 class="text-2xl font-bold text-gray-800 mb-2">{{ currentLesson?.title }}</h2>
-                  <p class="text-gray-600">{{ currentLesson?.content?.substring(0, 150) }}...</p>
+                  <h2 class="text-lg sm:text-2xl font-bold text-gray-800 mb-2">{{ currentLesson?.title }}</h2>
+                  <p class="text-sm sm:text-base text-gray-600 line-clamp-2 sm:line-clamp-none">{{ currentLesson?.content?.substring(0, 150) }}...</p>
                 </div>
                 <button
                   @click="markAsComplete"
-                  class="flex items-center gap-2 px-4 py-2 rounded-lg transition-all"
+                  class="flex items-center justify-center gap-2 px-3 sm:px-4 py-2 rounded-lg transition-all w-full sm:w-auto flex-shrink-0 text-sm sm:text-base"
                   :class="isCompleted ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
                 >
-                  <CheckCircle :size="20" />
-                  <span>{{ isCompleted ? 'เรียนจบแล้ว' : 'ทำเครื่องหมายว่าเรียนจบ' }}</span>
+                  <CheckCircle :size="18" class="sm:w-5 sm:h-5" />
+                  <span class="hidden sm:inline">{{ isCompleted ? 'เรียนจบแล้ว' : 'ทำเครื่องหมายว่าเรียนจบ' }}</span>
+                  <span class="sm:hidden">{{ isCompleted ? 'เรียนจบ' : 'ทำเครื่องหมาย' }}</span>
                 </button>
               </div>
               
-              <div class="flex items-center gap-6 text-sm text-gray-500 pt-4 border-t">
-                <div class="flex items-center gap-2">
-                  <Clock :size="16" />
+              <div class="flex flex-wrap items-center gap-3 sm:gap-6 text-xs sm:text-sm text-gray-500 pt-3 sm:pt-4 border-t">
+                <div class="flex items-center gap-1.5 sm:gap-2">
+                  <Clock :size="14" class="sm:w-4 sm:h-4" />
                   <span>{{ currentLesson?.duration || 0 }} นาที</span>
                 </div>
-                <div class="flex items-center gap-2">
-                  <BookOpen :size="16" />
+                <div class="flex items-center gap-1.5 sm:gap-2">
+                  <BookOpen :size="14" class="sm:w-4 sm:h-4" />
                   <span>บทที่ {{ currentLesson?.order }} จาก {{ lessons.length }}</span>
                 </div>
               </div>
 
               <!-- Navigation Buttons -->
-              <div class="flex gap-3 pt-4 border-t">
+              <div class="flex gap-2 sm:gap-3 pt-3 sm:pt-4 border-t">
                 <button
                   v-if="currentLessonIndex > 0"
                   @click="previousLesson"
-                  class="flex-1 py-3 border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition-all duration-200 flex items-center justify-center gap-2"
+                  class="flex-1 py-2 sm:py-3 border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition-all duration-200 flex items-center justify-center gap-1.5 sm:gap-2 text-sm sm:text-base"
                 >
-                  <ChevronLeft :size="18" />
-                  <span>บทก่อนหน้า</span>
+                  <ChevronLeft :size="16" class="sm:w-[18px] sm:h-[18px]" />
+                  <span class="hidden sm:inline">บทก่อนหน้า</span>
+                  <span class="sm:hidden">ก่อนหน้า</span>
                 </button>
                 <button
                   v-if="currentLessonIndex < lessons.length - 1"
                   @click="nextLesson"
-                  class="flex-1 py-3 bg-gradient-to-r from-primary to-orange-600 text-white font-semibold rounded-lg hover:shadow-lg transition-all duration-300 flex items-center justify-center gap-2"
+                  class="flex-1 py-2 sm:py-3 bg-gradient-to-r from-primary to-orange-600 text-white font-semibold rounded-lg hover:shadow-lg transition-all duration-300 flex items-center justify-center gap-1.5 sm:gap-2 text-sm sm:text-base"
                 >
-                  <span>บทถัดไป</span>
-                  <ChevronRight :size="18" />
+                  <span class="hidden sm:inline">บทถัดไป</span>
+                  <span class="sm:hidden">ถัดไป</span>
+                  <ChevronRight :size="16" class="sm:w-[18px] sm:h-[18px]" />
                 </button>
               </div>
             </div>
           </div>
 
           <!-- Tabs -->
-          <div class="bg-white rounded-xl border-2 shadow-sm">
-            <div class="border-b">
-              <div class="flex">
+          <div class="bg-white rounded-lg sm:rounded-xl border sm:border-2 shadow-sm">
+            <div class="border-b overflow-x-auto">
+              <div class="flex min-w-max sm:min-w-0">
                 <button
                   v-for="tab in tabs"
                   :key="tab.id"
                   @click="activeTab = tab.id"
-                  class="flex-1 px-6 py-4 font-medium transition-colors relative"
+                  class="flex-1 px-4 sm:px-6 py-3 sm:py-4 font-medium transition-colors relative text-sm sm:text-base whitespace-nowrap"
                   :class="activeTab === tab.id ? 'text-primary' : 'text-gray-600 hover:text-gray-800'"
                 >
                   {{ tab.label }}
@@ -123,7 +135,7 @@
               </div>
             </div>
 
-            <div class="p-6">
+            <div class="p-4 sm:p-6">
               <!-- Overview Tab -->
               <div v-show="activeTab === 'overview'" class="space-y-4">
                 <div>
@@ -232,40 +244,40 @@
         </div>
 
         <!-- Sidebar - Lessons List -->
-        <div class="space-y-6">
-          <div class="bg-white rounded-xl border-2 shadow-sm sticky top-24">
-            <div class="p-6 border-b">
-              <h3 class="font-bold text-gray-800 flex items-center gap-2 mb-2">
-                <BookOpen :size="20" class="text-primary" />
+        <div class="space-y-3 sm:space-y-6">
+          <div class="bg-white rounded-lg sm:rounded-xl border sm:border-2 shadow-sm lg:sticky lg:top-24">
+            <div class="p-4 sm:p-6 border-b">
+              <h3 class="font-bold text-gray-800 flex items-center gap-2 mb-2 text-sm sm:text-base">
+                <BookOpen :size="18" class="sm:w-5 sm:h-5 text-primary" />
                 เนื้อหาคอร์ส
               </h3>
-              <p class="text-sm text-gray-500">{{ lessons.length }} บทเรียน • {{ totalDuration }} นาที</p>
+              <p class="text-xs sm:text-sm text-gray-500">{{ lessons.length }} บทเรียน • {{ totalDuration }} นาที</p>
             </div>
             
-            <div class="p-4 max-h-[calc(100vh-300px)] overflow-y-auto">
+            <div class="p-3 sm:p-4 max-h-[400px] lg:max-h-[calc(100vh-300px)] overflow-y-auto">
               <!-- Progress -->
-              <div class="mb-4 px-2">
+              <div class="mb-3 sm:mb-4 px-1 sm:px-2">
                 <div class="flex items-center justify-between mb-2">
-                  <span class="text-sm text-gray-600">ความก้าวหน้า</span>
-                  <span class="text-sm font-medium text-gray-800">{{ completedCount }}/{{ lessons.length }}</span>
+                  <span class="text-xs sm:text-sm text-gray-600">ความก้าวหน้า</span>
+                  <span class="text-xs sm:text-sm font-medium text-gray-800">{{ completedCount }}/{{ lessons.length }}</span>
                 </div>
-                <div class="w-full bg-gray-200 rounded-full h-2">
+                <div class="w-full bg-gray-200 rounded-full h-1.5 sm:h-2">
                   <div
-                    class="bg-gradient-to-r from-primary to-orange-600 h-2 rounded-full transition-all duration-300"
+                    class="bg-gradient-to-r from-primary to-orange-600 h-1.5 sm:h-2 rounded-full transition-all duration-300"
                     :style="{ width: `${progressPercentage}%` }"
                   ></div>
                 </div>
               </div>
 
               <!-- Lessons by Section -->
-              <div class="space-y-2">
+              <div class="space-y-1.5 sm:space-y-2">
                 <div v-for="section in groupedLessons" :key="section.name">
                   <button
                     @click="section.expanded = !section.expanded"
-                    class="w-full flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg transition-colors"
+                    class="w-full flex items-center justify-between p-2 sm:p-3 hover:bg-gray-50 rounded-lg transition-colors"
                   >
-                    <span class="font-semibold text-gray-800 text-sm">{{ section.name }}</span>
-                    <ChevronDown :size="18" :class="{ 'rotate-180': section.expanded }" class="transition-transform text-gray-500" />
+                    <span class="font-semibold text-gray-800 text-xs sm:text-sm">{{ section.name }}</span>
+                    <ChevronDown :size="16" class="sm:w-[18px] sm:h-[18px]" :class="{ 'rotate-180': section.expanded }" class="transition-transform text-gray-500" />
                   </button>
 
                   <div v-show="section.expanded" class="space-y-1 mt-1">
@@ -273,27 +285,28 @@
                       v-for="lesson in section.lessons"
                       :key="lesson.id"
                       @click="selectLesson(lesson)"
-                      class="w-full text-left p-3 rounded-lg transition-all duration-200"
+                      class="w-full text-left p-2 sm:p-3 rounded-lg transition-all duration-200"
                       :class="currentLesson?.id === lesson.id ? 'bg-gradient-to-r from-primary to-orange-600 text-white' : 'hover:bg-gray-50'"
                     >
-                      <div class="flex items-start gap-3">
+                      <div class="flex items-start gap-2 sm:gap-3">
                         <div class="mt-0.5 flex-shrink-0">
                           <CheckCircle
                             v-if="isLessonCompleted(lesson.id)"
-                            :size="18"
-                            class="text-green-500"
+                            :size="16"
+                            class="sm:w-[18px] sm:h-[18px] text-green-500"
                           />
                           <PlayCircle
                             v-else
-                            :size="18"
+                            :size="16"
+                            class="sm:w-[18px] sm:h-[18px]"
                             :class="currentLesson?.id === lesson.id ? 'text-white' : 'text-gray-400'"
                           />
                         </div>
                         <div class="flex-1 min-w-0">
-                          <p class="font-medium text-sm mb-1 line-clamp-2" :class="currentLesson?.id === lesson.id ? 'text-white' : 'text-gray-800'">
+                          <p class="font-medium text-xs sm:text-sm mb-0.5 sm:mb-1 line-clamp-2" :class="currentLesson?.id === lesson.id ? 'text-white' : 'text-gray-800'">
                             {{ lesson.title }}
                           </p>
-                          <p class="text-xs" :class="currentLesson?.id === lesson.id ? 'text-white/80' : 'text-gray-500'">
+                          <p class="text-[10px] sm:text-xs" :class="currentLesson?.id === lesson.id ? 'text-white/80' : 'text-gray-500'">
                             {{ lesson.duration || 0 }} นาที
                           </p>
                         </div>

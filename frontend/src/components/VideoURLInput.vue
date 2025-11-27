@@ -4,30 +4,33 @@
       <!-- Unified Input Field -->
       <div>
         <label class="text-sm font-semibold text-gray-700 flex items-center gap-2 mb-1.5 sm:mb-2">
-          ลิงก์วิดีโอ <span class="text-red-500">*</span>
+          ลิงก์วิดีโอ
         </label>
         <div class="relative group">
-          <div class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-primary transition-colors pointer-events-none">
+          <div class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-primary transition-colors pointer-events-none z-10">
             <LinkIcon :size="20" />
           </div>
           <input
-            type="text"
+            type="url"
             v-model="inputValue"
             @input="handleInput"
-            placeholder="วางลิงก์ YouTube หรือไฟล์วิดีโอที่นี่..."
-            class="w-full pl-10 pr-12 py-3 bg-white border border-gray-200 rounded-xl focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all duration-200 outline-none placeholder:text-gray-400 text-gray-700 text-base sm:text-sm"
+            @paste="handlePaste"
+            inputmode="url"
+            placeholder="วางลิงก์ YouTube ที่นี่..."
+            class="w-full pl-10 pr-12 py-3 bg-white border border-gray-200 rounded-xl focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all duration-200 outline-none placeholder:text-gray-400 text-gray-700 text-base"
           />
           <!-- Clear Button -->
           <button 
             v-if="inputValue"
             @click="clearUrl"
             type="button"
-            class="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-all active:scale-95"
+            class="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-all active:scale-95 z-10"
             aria-label="ล้างข้อมูล"
           >
             <X :size="18" />
           </button>
         </div>
+        <p class="text-xs text-gray-500 mt-1.5">รองรับ: YouTube, ลิงก์วิดีโอโดยตรง (MP4, WebM)</p>
       </div>
 
       <!-- Preview Section -->
@@ -141,6 +144,13 @@ function handleInput() {
   } else {
     emit('update:modelValue', url);
   }
+}
+
+function handlePaste(event) {
+  // Let the default paste happen, then process
+  setTimeout(() => {
+    handleInput();
+  }, 10);
 }
 
 function clearUrl() {
