@@ -1,7 +1,17 @@
 <template>
   <div class="min-h-screen bg-gray-50">
+    <!-- Mobile Menu Overlay -->
+    <div
+      v-if="mobileMenuOpen"
+      @click="mobileMenuOpen = false"
+      class="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+    ></div>
+
     <!-- Sidebar -->
-    <aside class="fixed left-0 top-0 h-full w-64 bg-white border-r border-gray-200 z-40">
+    <aside
+      class="fixed left-0 top-0 h-full w-64 bg-white border-r border-gray-200 z-50 transition-transform duration-300"
+      :class="mobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'"
+    >
       <!-- Logo -->
       <div class="p-6 border-b border-gray-200">
         <router-link to="/" class="flex items-center gap-2 group">
@@ -87,13 +97,21 @@
     </aside>
 
     <!-- Main Content -->
-    <div class="ml-64">
+    <div class="lg:ml-64">
       <!-- Header -->
       <header class="bg-white border-b border-gray-200 sticky top-0 z-30">
-        <div class="px-8 py-4 flex items-center justify-between">
-          <div>
-            <h1 class="text-2xl font-bold text-gray-800">ยินดีต้อนรับกลับมา, {{ user?.name }}!</h1>
-            <p class="text-sm text-gray-500 mt-1">มาเริ่มต้นสร้างสรรค์สิ่งใหม่กันเถอะ</p>
+        <div class="px-4 lg:px-8 py-4 flex items-center justify-between">
+          <!-- Mobile Menu Button -->
+          <button
+            @click="mobileMenuOpen = !mobileMenuOpen"
+            class="lg:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
+          >
+            <Menu v-if="!mobileMenuOpen" :size="24" class="text-gray-600" />
+            <X v-else :size="24" class="text-gray-600" />
+          </button>
+          <div class="flex-1 ml-4 lg:ml-0">
+            <h1 class="text-lg lg:text-2xl font-bold text-gray-800">ยินดีต้อนรับ, {{ user?.name }}!</h1>
+            <p class="text-xs lg:text-sm text-gray-500 mt-1 hidden sm:block">มาเริ่มต้นสร้างสรรค์สิ่งใหม่กันเถอะ</p>
           </div>
           <div class="flex items-center gap-4">
             <!-- Notifications -->
@@ -112,7 +130,7 @@
       </header>
 
       <!-- Dashboard Content -->
-      <main class="p-8">
+      <main class="p-4 lg:p-8">
         <!-- Stats Cards -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <div class="bg-white rounded-xl p-6 border border-gray-200 hover:shadow-lg transition-shadow">
@@ -293,7 +311,9 @@ import {
   TrendingUp,
   Play,
   Calendar,
-  FileText
+  FileText,
+  Menu,
+  X
 } from 'lucide-vue-next'
 
 const router = useRouter()
@@ -309,6 +329,7 @@ const loading = ref(true)
 const currentRoute = ref('dashboard')
 const enrolling = ref(null)
 const enrollments = ref([])
+const mobileMenuOpen = ref(false)
 
 onMounted(async () => {
   await loadUserData()
@@ -367,12 +388,12 @@ const loadDashboardData = async () => {
       }
     }
 
-    // If less than 3 enrolled courses, add some published courses
-    if (enrolledCoursesData.length < 3) {
+    // If less than 6 enrolled courses, add some published courses
+    if (enrolledCoursesData.length < 6) {
       const coursesResponse = await api.get('/api/courses?published=true')
       const otherCourses = coursesResponse.data
         .filter(c => !enrollments.value.some(e => e.course_id === c.id))
-        .slice(0, 3 - enrolledCoursesData.length)
+        .slice(0, 6 - enrolledCoursesData.length)
         .map(course => ({
           ...course,
           isEnrolled: false,
@@ -383,7 +404,7 @@ const loadDashboardData = async () => {
       
       courses.value = [...enrolledCoursesData, ...otherCourses]
     } else {
-      courses.value = enrolledCoursesData.slice(0, 6)
+      courses.value = enrolledCoursesData
     }
 
     // Calculate stats

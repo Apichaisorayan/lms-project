@@ -31,28 +31,17 @@
           <div class="bg-white rounded-xl overflow-hidden border-2 shadow-sm">
             <div class="relative bg-black aspect-video group">
               <div v-if="currentLesson?.videoUrl" class="w-full h-full">
-                <iframe
-                  :src="getEmbedUrl(currentLesson.videoUrl)"
-                  class="w-full h-full"
-                  frameborder="0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowfullscreen
-                ></iframe>
+                <EnhancedVideoPlayer
+                  :video-url="currentLesson.videoUrl"
+                  :title="currentLesson.title"
+                  :show-info="false"
+                  @video-ended="markAsComplete"
+                />
               </div>
-              <div v-else class="absolute inset-0 flex items-center justify-center text-gray-400">
+              <div v-else class="absolute inset-0 flex items-center justify-center text-gray-400 bg-gray-900">
                 <div class="text-center">
                   <ImageIcon :size="64" class="mx-auto mb-4 opacity-50" />
                   <p>ไม่มีวิดีโอสำหรับบทเรียนนี้</p>
-                </div>
-              </div>
-              
-              <!-- Video Controls Overlay -->
-              <div v-if="currentLesson?.videoUrl" class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                <div class="absolute top-4 left-4 right-4 flex items-center justify-between">
-                  <div class="px-3 py-1 bg-primary text-white text-sm rounded-full flex items-center gap-2">
-                    <Clock :size="14" />
-                    <span>{{ currentLesson?.duration || 0 }} นาที</span>
-                  </div>
                 </div>
               </div>
             </div>
@@ -74,6 +63,14 @@
                   <h2 class="text-2xl font-bold text-gray-800 mb-2">{{ currentLesson?.title }}</h2>
                   <p class="text-gray-600">{{ currentLesson?.content?.substring(0, 150) }}...</p>
                 </div>
+                <button
+                  @click="markAsComplete"
+                  class="flex items-center gap-2 px-4 py-2 rounded-lg transition-all"
+                  :class="isCompleted ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
+                >
+                  <CheckCircle :size="20" />
+                  <span>{{ isCompleted ? 'เรียนจบแล้ว' : 'ทำเครื่องหมายว่าเรียนจบ' }}</span>
+                </button>
               </div>
               
               <div class="flex items-center gap-6 text-sm text-gray-500 pt-4 border-t">
@@ -332,6 +329,7 @@ import {
   ImageIcon,
   Eye
 } from 'lucide-vue-next'
+import EnhancedVideoPlayer from '../components/EnhancedVideoPlayer.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -454,7 +452,11 @@ const loadCourse = async () => {
     })
     
     course.value = response.data
-    lessons.value = response.data.lessons || []
+    lessons.value = (response.data.lessons || []).map(l => ({
+      ...l,
+      videoUrl: l.videoUrl || l.video_url, // Normalize snake_case to camelCase
+      order: l.order || l.order_index // Normalize order if needed
+    }))
     
     if (lessons.value.length > 0) {
       currentLesson.value = lessons.value[0]
@@ -521,22 +523,6 @@ const markAsComplete = async () => {
 
 const isLessonCompleted = (lessonId) => {
   return progress.value.some(p => p.lessonId === lessonId && p.completed)
-}
-
-const getEmbedUrl = (url) => {
-  if (!url) return ''
-  
-  // Convert YouTube URL to embed format
-  if (url.includes('youtube.com/watch')) {
-    const videoId = url.split('v=')[1]?.split('&')[0]
-    return `https://www.youtube.com/embed/${videoId}`
-  }
-  if (url.includes('youtu.be/')) {
-    const videoId = url.split('youtu.be/')[1]?.split('?')[0]
-    return `https://www.youtube.com/embed/${videoId}`
-  }
-  
-  return url
 }
 
 const goBack = () => {

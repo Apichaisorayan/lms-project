@@ -8,20 +8,20 @@ app.use('/*', cors({
   origin: (origin) => {
     // Allow localhost for development
     if (!origin || origin.includes('localhost')) return origin;
-    
+
     // Allow Cloudflare Pages (including preview deployments)
     if (origin && origin.includes('.pages.dev')) return origin;
-    
+
     // Allow other production domains
     const allowedDomains = [
       'https://apichaisorayan.github.io',
       'https://learning-platform-api.apichailove-student.workers.dev'
     ];
-    
+
     if (allowedDomains.some(domain => origin && origin.startsWith(domain))) {
       return origin;
     }
-    
+
     return origin || '*';
   },
   credentials: true,
@@ -59,10 +59,10 @@ async function sign(payload, secret) {
   const encoder = new TextEncoder();
   const data = encoder.encode(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
   const header = btoa(String.fromCharCode(...data)).replace(/=/g, '');
-  
+
   const payloadData = encoder.encode(JSON.stringify(payload));
   const payloadEncoded = btoa(String.fromCharCode(...payloadData)).replace(/=/g, '');
-  
+
   const signatureData = encoder.encode(`${header}.${payloadEncoded}`);
   const key = await crypto.subtle.importKey(
     'raw',
@@ -73,7 +73,7 @@ async function sign(payload, secret) {
   );
   const signature = await crypto.subtle.sign('HMAC', key, signatureData);
   const signatureEncoded = btoa(String.fromCharCode(...new Uint8Array(signature))).replace(/=/g, '');
-  
+
   return `${header}.${payloadEncoded}.${signatureEncoded}`;
 }
 
@@ -81,15 +81,18 @@ async function sign(payload, secret) {
 const authMiddleware = async (c, next) => {
   const authHeader = c.req.header('Authorization');
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    console.log('Auth failed: No token provided');
     return c.json({ error: 'Unauthorized' }, 401);
   }
 
   const token = authHeader.substring(7);
   try {
     const decoded = await verifyToken(token, c.env.JWT_SECRET);
+    console.log('User authenticated:', decoded.email, 'Role:', decoded.role); // Debug Log
     c.set('user', decoded);
     await next();
   } catch (error) {
+    console.log('Auth failed: Invalid token', error.message);
     return c.json({ error: 'Invalid token' }, 401);
   }
 };
@@ -98,12 +101,12 @@ const authMiddleware = async (c, next) => {
 async function verifyToken(token, secret) {
   const parts = token.split('.');
   if (parts.length !== 3) throw new Error('Invalid token');
-  
+
   const payload = JSON.parse(atob(parts[1]));
   if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) {
     throw new Error('Token expired');
   }
-  
+
   return payload;
 }
 
@@ -111,7 +114,9 @@ async function verifyToken(token, secret) {
 const requireRole = (...roles) => {
   return async (c, next) => {
     const user = c.get('user');
+    console.log('Checking role for user:', user?.email, 'Required:', roles, 'Actual:', user?.role); // Debug Log
     if (!user || !roles.includes(user.role)) {
+      console.log('Role check failed');
       return c.json({ error: 'Forbidden' }, 403);
     }
     await next();
@@ -124,7 +129,7 @@ const requireRole = (...roles) => {
 app.post('/api/auth/register', async (c) => {
   try {
     const { email, password, name, role = 'STUDENT' } = await c.req.json();
-    
+
     if (!email || !password || !name) {
       return c.json({ error: 'Missing required fields' }, 400);
     }
@@ -160,7 +165,7 @@ app.post('/api/auth/register', async (c) => {
 app.post('/api/auth/login', async (c) => {
   try {
     const { email, password } = await c.req.json();
-    
+
     if (!email || !password) {
       return c.json({ error: 'Missing email or password' }, 400);
     }
@@ -190,14 +195,22 @@ app.post('/api/auth/login', async (c) => {
 app.get('/api/courses', async (c) => {
   try {
     const published = c.req.query('published');
-    let query = 'SELECT c.*, u.name as instructor_name FROM courses c JOIN users u ON c.instructor_id = u.id';
-    
+    let query = `
+      SELECT 
+        c.*, 
+        u.name as instructor_name,
+        (SELECT COUNT(*) FROM lessons WHERE course_id = c.id) as lessons_count,
+        (SELECT COUNT(*) FROM enrollments WHERE course_id = c.id) as students_count
+      FROM courses c 
+      JOIN users u ON c.instructor_id = u.id
+    `;
+
     if (published === 'true') {
       query += ' WHERE c.published = 1';
     }
-    
+
     query += ' ORDER BY c.created_at DESC';
-    
+
     const { results } = await c.env.DB.prepare(query).all();
     return c.json(results);
   } catch (error) {
@@ -209,7 +222,7 @@ app.get('/api/courses', async (c) => {
 app.get('/api/courses/:id', async (c) => {
   try {
     const courseId = c.req.param('id');
-    
+
     const course = await c.env.DB.prepare(
       'SELECT c.*, u.name as instructor_name FROM courses c JOIN users u ON c.instructor_id = u.id WHERE c.id = ?'
     ).bind(courseId).first();
@@ -229,7 +242,7 @@ app.get('/api/courses/:id', async (c) => {
 });
 
 // Create course (INSTRUCTOR only)
-app.post('/api/courses', authMiddleware, requireRole('INSTRUCTOR'), async (c) => {
+app.post('/api/courses', authMiddleware, requireRole('INSTRUCTOR', 'ADMIN'), async (c) => {
   try {
     const { title, description, thumbnail, price = 0, published = false } = await c.req.json();
     const user = c.get('user');
@@ -252,7 +265,7 @@ app.post('/api/courses', authMiddleware, requireRole('INSTRUCTOR'), async (c) =>
 });
 
 // Update course
-app.put('/api/courses/:id', authMiddleware, requireRole('INSTRUCTOR'), async (c) => {
+app.put('/api/courses/:id', authMiddleware, requireRole('INSTRUCTOR', 'ADMIN'), async (c) => {
   try {
     const courseId = c.req.param('id');
     const user = c.get('user');
@@ -260,19 +273,19 @@ app.put('/api/courses/:id', authMiddleware, requireRole('INSTRUCTOR'), async (c)
 
     // Check ownership
     const course = await c.env.DB.prepare('SELECT instructor_id FROM courses WHERE id = ?').bind(courseId).first();
-    if (!course || course.instructor_id !== user.userId) {
+    if (!course || (course.instructor_id !== user.userId && user.role !== 'ADMIN')) {
       return c.json({ error: 'Forbidden' }, 403);
     }
 
     const fields = [];
     const values = [];
-    
+
     if (updates.title !== undefined) { fields.push('title = ?'); values.push(updates.title); }
     if (updates.description !== undefined) { fields.push('description = ?'); values.push(updates.description); }
     if (updates.thumbnail !== undefined) { fields.push('thumbnail = ?'); values.push(updates.thumbnail); }
     if (updates.price !== undefined) { fields.push('price = ?'); values.push(updates.price); }
     if (updates.published !== undefined) { fields.push('published = ?'); values.push(updates.published ? 1 : 0); }
-    
+
     fields.push('updated_at = CURRENT_TIMESTAMP');
     values.push(courseId);
 
@@ -288,13 +301,13 @@ app.put('/api/courses/:id', authMiddleware, requireRole('INSTRUCTOR'), async (c)
 });
 
 // Delete course
-app.delete('/api/courses/:id', authMiddleware, requireRole('INSTRUCTOR'), async (c) => {
+app.delete('/api/courses/:id', authMiddleware, requireRole('INSTRUCTOR', 'ADMIN'), async (c) => {
   try {
     const courseId = c.req.param('id');
     const user = c.get('user');
 
     const course = await c.env.DB.prepare('SELECT instructor_id FROM courses WHERE id = ?').bind(courseId).first();
-    if (!course || course.instructor_id !== user.userId) {
+    if (!course || (course.instructor_id !== user.userId && user.role !== 'ADMIN')) {
       return c.json({ error: 'Forbidden' }, 403);
     }
 
@@ -308,13 +321,14 @@ app.delete('/api/courses/:id', authMiddleware, requireRole('INSTRUCTOR'), async 
 // ==================== LESSONS ROUTES ====================
 
 // Get lessons in course
+// Get lessons in course
 app.get('/api/courses/:courseId/lessons', async (c) => {
   try {
     const courseId = c.req.param('courseId');
     const { results } = await c.env.DB.prepare(
       'SELECT * FROM lessons WHERE course_id = ? ORDER BY order_index'
     ).bind(courseId).all();
-    
+
     return c.json(results);
   } catch (error) {
     return c.json({ error: error.message }, 500);
@@ -322,15 +336,23 @@ app.get('/api/courses/:courseId/lessons', async (c) => {
 });
 
 // Create lesson
-app.post('/api/courses/:courseId/lessons', authMiddleware, requireRole('INSTRUCTOR'), async (c) => {
+app.post('/api/courses/:courseId/lessons', authMiddleware, requireRole('INSTRUCTOR', 'ADMIN'), async (c) => {
   try {
     const courseId = c.req.param('courseId');
     const user = c.get('user');
-    const { title, content, video_url, order_index = 0, duration = 0 } = await c.req.json();
+    const body = await c.req.json();
+    const { title, content, duration = 0 } = body;
+    // Map frontend camelCase to backend snake_case
+    const video_url = body.video_url || body.videoUrl;
+    const order_index = body.order_index || body.order || 0;
 
     // Check ownership
     const course = await c.env.DB.prepare('SELECT instructor_id FROM courses WHERE id = ?').bind(courseId).first();
-    if (!course || course.instructor_id !== user.userId) {
+
+    console.log(`Debug Ownership: Course Owner ID: ${course?.instructor_id}, Current User ID: ${user.userId}, Role: ${user.role}`);
+
+    if (!course || (course.instructor_id !== user.userId && user.role !== 'ADMIN')) {
+      console.log('Ownership check failed: Not owner and not admin');
       return c.json({ error: 'Forbidden' }, 403);
     }
 
@@ -343,12 +365,13 @@ app.post('/api/courses/:courseId/lessons', authMiddleware, requireRole('INSTRUCT
 
     return c.json(lesson, 201);
   } catch (error) {
+    console.error('Create lesson error:', error);
     return c.json({ error: error.message }, 500);
   }
 });
 
 // Update lesson
-app.put('/api/lessons/:id', authMiddleware, requireRole('INSTRUCTOR'), async (c) => {
+app.put('/api/lessons/:id', authMiddleware, requireRole('INSTRUCTOR', 'ADMIN'), async (c) => {
   try {
     const lessonId = c.req.param('id');
     const user = c.get('user');
@@ -358,20 +381,20 @@ app.put('/api/lessons/:id', authMiddleware, requireRole('INSTRUCTOR'), async (c)
     const lesson = await c.env.DB.prepare(
       'SELECT l.*, c.instructor_id FROM lessons l JOIN courses c ON l.course_id = c.id WHERE l.id = ?'
     ).bind(lessonId).first();
-    
-    if (!lesson || lesson.instructor_id !== user.userId) {
+
+    if (!lesson || (lesson.instructor_id !== user.userId && user.role !== 'ADMIN')) {
       return c.json({ error: 'Forbidden' }, 403);
     }
 
     const fields = [];
     const values = [];
-    
+
     if (updates.title !== undefined) { fields.push('title = ?'); values.push(updates.title); }
     if (updates.content !== undefined) { fields.push('content = ?'); values.push(updates.content); }
     if (updates.video_url !== undefined) { fields.push('video_url = ?'); values.push(updates.video_url); }
     if (updates.order_index !== undefined) { fields.push('order_index = ?'); values.push(updates.order_index); }
     if (updates.duration !== undefined) { fields.push('duration = ?'); values.push(updates.duration); }
-    
+
     fields.push('updated_at = CURRENT_TIMESTAMP');
     values.push(lessonId);
 
@@ -387,7 +410,7 @@ app.put('/api/lessons/:id', authMiddleware, requireRole('INSTRUCTOR'), async (c)
 });
 
 // Delete lesson
-app.delete('/api/lessons/:id', authMiddleware, requireRole('INSTRUCTOR'), async (c) => {
+app.delete('/api/lessons/:id', authMiddleware, requireRole('INSTRUCTOR', 'ADMIN'), async (c) => {
   try {
     const lessonId = c.req.param('id');
     const user = c.get('user');
@@ -395,8 +418,8 @@ app.delete('/api/lessons/:id', authMiddleware, requireRole('INSTRUCTOR'), async 
     const lesson = await c.env.DB.prepare(
       'SELECT l.*, c.instructor_id FROM lessons l JOIN courses c ON l.course_id = c.id WHERE l.id = ?'
     ).bind(lessonId).first();
-    
-    if (!lesson || lesson.instructor_id !== user.userId) {
+
+    if (!lesson || (lesson.instructor_id !== user.userId && user.role !== 'ADMIN')) {
       return c.json({ error: 'Forbidden' }, 403);
     }
 
@@ -417,7 +440,7 @@ app.get('/api/lessons/:lessonId/resources', async (c) => {
     const { results } = await c.env.DB.prepare(
       'SELECT * FROM resources WHERE lesson_id = ? ORDER BY created_at'
     ).bind(lessonId).all();
-    
+
     return c.json(results);
   } catch (error) {
     return c.json({ error: error.message }, 500);
@@ -425,7 +448,7 @@ app.get('/api/lessons/:lessonId/resources', async (c) => {
 });
 
 // Add resource
-app.post('/api/lessons/:lessonId/resources', authMiddleware, requireRole('INSTRUCTOR'), async (c) => {
+app.post('/api/lessons/:lessonId/resources', authMiddleware, requireRole('INSTRUCTOR', 'ADMIN'), async (c) => {
   try {
     const lessonId = c.req.param('lessonId');
     const user = c.get('user');
@@ -435,8 +458,8 @@ app.post('/api/lessons/:lessonId/resources', authMiddleware, requireRole('INSTRU
     const lesson = await c.env.DB.prepare(
       'SELECT l.*, c.instructor_id FROM lessons l JOIN courses c ON l.course_id = c.id WHERE l.id = ?'
     ).bind(lessonId).first();
-    
-    if (!lesson || lesson.instructor_id !== user.userId) {
+
+    if (!lesson || (lesson.instructor_id !== user.userId && user.role !== 'ADMIN')) {
       return c.json({ error: 'Forbidden' }, 403);
     }
 
@@ -454,7 +477,7 @@ app.post('/api/lessons/:lessonId/resources', authMiddleware, requireRole('INSTRU
 });
 
 // Delete resource
-app.delete('/api/resources/:id', authMiddleware, requireRole('INSTRUCTOR'), async (c) => {
+app.delete('/api/resources/:id', authMiddleware, requireRole('INSTRUCTOR', 'ADMIN'), async (c) => {
   try {
     const resourceId = c.req.param('id');
     const user = c.get('user');
@@ -462,8 +485,8 @@ app.delete('/api/resources/:id', authMiddleware, requireRole('INSTRUCTOR'), asyn
     const resource = await c.env.DB.prepare(
       'SELECT r.*, l.course_id, c.instructor_id FROM resources r JOIN lessons l ON r.lesson_id = l.id JOIN courses c ON l.course_id = c.id WHERE r.id = ?'
     ).bind(resourceId).first();
-    
-    if (!resource || resource.instructor_id !== user.userId) {
+
+    if (!resource || (resource.instructor_id !== user.userId && user.role !== 'ADMIN')) {
       return c.json({ error: 'Forbidden' }, 403);
     }
 
@@ -483,23 +506,23 @@ app.get('/api/lessons/:lessonId/quizzes', async (c) => {
     const { results: quizzes } = await c.env.DB.prepare(
       'SELECT * FROM quizzes WHERE lesson_id = ? ORDER BY created_at'
     ).bind(lessonId).all();
-    
+
     // Get questions and choices for each quiz
     for (const quiz of quizzes) {
       const { results: questions } = await c.env.DB.prepare(
         'SELECT * FROM questions WHERE quiz_id = ? ORDER BY order_index'
       ).bind(quiz.id).all();
-      
+
       for (const question of questions) {
         const { results: choices } = await c.env.DB.prepare(
           'SELECT * FROM choices WHERE question_id = ? ORDER BY order_index'
         ).bind(question.id).all();
         question.choices = choices;
       }
-      
+
       quiz.questions = questions;
     }
-    
+
     return c.json(quizzes);
   } catch (error) {
     return c.json({ error: error.message }, 500);
@@ -507,7 +530,7 @@ app.get('/api/lessons/:lessonId/quizzes', async (c) => {
 });
 
 // Create quiz with questions and choices
-app.post('/api/lessons/:lessonId/quizzes', authMiddleware, requireRole('INSTRUCTOR'), async (c) => {
+app.post('/api/lessons/:lessonId/quizzes', authMiddleware, requireRole('INSTRUCTOR', 'ADMIN'), async (c) => {
   try {
     const lessonId = c.req.param('lessonId');
     const user = c.get('user');
@@ -517,8 +540,8 @@ app.post('/api/lessons/:lessonId/quizzes', authMiddleware, requireRole('INSTRUCT
     const lesson = await c.env.DB.prepare(
       'SELECT l.*, c.instructor_id FROM lessons l JOIN courses c ON l.course_id = c.id WHERE l.id = ?'
     ).bind(lessonId).first();
-    
-    if (!lesson || lesson.instructor_id !== user.userId) {
+
+    if (!lesson || (lesson.instructor_id !== user.userId && user.role !== 'ADMIN')) {
       return c.json({ error: 'Forbidden' }, 403);
     }
 
@@ -553,14 +576,14 @@ app.post('/api/lessons/:lessonId/quizzes', authMiddleware, requireRole('INSTRUCT
     const { results: quizQuestions } = await c.env.DB.prepare(
       'SELECT * FROM questions WHERE quiz_id = ? ORDER BY order_index'
     ).bind(quizId).all();
-    
+
     for (const question of quizQuestions) {
       const { results: choices } = await c.env.DB.prepare(
         'SELECT * FROM choices WHERE question_id = ? ORDER BY order_index'
       ).bind(question.id).all();
       question.choices = choices;
     }
-    
+
     quiz.questions = quizQuestions;
 
     return c.json(quiz, 201);
@@ -570,7 +593,7 @@ app.post('/api/lessons/:lessonId/quizzes', authMiddleware, requireRole('INSTRUCT
 });
 
 // Delete quiz
-app.delete('/api/quizzes/:id', authMiddleware, requireRole('INSTRUCTOR'), async (c) => {
+app.delete('/api/quizzes/:id', authMiddleware, requireRole('INSTRUCTOR', 'ADMIN'), async (c) => {
   try {
     const quizId = c.req.param('id');
     const user = c.get('user');
@@ -578,8 +601,8 @@ app.delete('/api/quizzes/:id', authMiddleware, requireRole('INSTRUCTOR'), async 
     const quiz = await c.env.DB.prepare(
       'SELECT q.*, l.course_id, c.instructor_id FROM quizzes q JOIN lessons l ON q.lesson_id = l.id JOIN courses c ON l.course_id = c.id WHERE q.id = ?'
     ).bind(quizId).first();
-    
-    if (!quiz || quiz.instructor_id !== user.userId) {
+
+    if (!quiz || (quiz.instructor_id !== user.userId && user.role !== 'ADMIN')) {
       return c.json({ error: 'Forbidden' }, 403);
     }
 
@@ -741,7 +764,7 @@ app.post('/api/courses/:courseId/enroll', authMiddleware, async (c) => {
 });
 
 // Get my courses (as instructor)
-app.get('/api/my-courses', authMiddleware, requireRole('INSTRUCTOR'), async (c) => {
+app.get('/api/my-courses', authMiddleware, requireRole('INSTRUCTOR', 'ADMIN'), async (c) => {
   try {
     const user = c.get('user');
 

@@ -4,7 +4,12 @@
   "type": "module",
   "scripts": {
     "dev": "wrangler dev",
-    "deploy": "wrangler deploy"
+    "deploy": "wrangler deploy",
+    "db:create": "wrangler d1 create learning_platform",
+    "db:migrate": "wrangler d1 execute learning_platform --remote --file=schema.sql",
+    "db:migrate:local": "wrangler d1 execute learning_platform --local --file=schema.sql",
+    "db:query": "wrangler d1 execute learning_platform --remote --command",
+    "tail": "wrangler tail"
   },
   "dependencies": {
     "hono": "^4.0.0"

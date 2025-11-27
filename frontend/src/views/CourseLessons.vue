@@ -1,190 +1,305 @@
 <template>
-  <div class="min-h-screen bg-gray-50">
-    <!-- Sidebar -->
-    <aside class="fixed left-0 top-0 h-full w-64 bg-white border-r border-gray-200 z-40">
-      <div class="p-6 border-b border-gray-200">
-        <router-link to="/" class="flex items-center gap-2 group">
-          <div class="bg-gradient-to-br from-primary to-orange-600 p-2 rounded-xl">
-            <GraduationCap :size="24" class="text-white" />
+  <DashboardLayout>
+    <template #header>
+      <div class="flex-1 ml-4 lg:ml-0 flex items-center justify-between gap-4">
+        <div class="flex items-center gap-2 lg:gap-4 flex-1 min-w-0">
+          <button @click="goBack" class="p-2 hover:bg-orange-50 text-gray-600 hover:text-orange-600 rounded-xl transition-all duration-200 flex-shrink-0 group">
+            <ArrowLeft :size="20" class="group-hover:-translate-x-1 transition-transform" />
+          </button>
+          <div class="min-w-0">
+            <h1 class="text-lg lg:text-2xl font-bold text-gray-800 truncate flex items-center gap-2">
+              <span class="bg-gradient-to-r from-orange-500 to-red-500 bg-clip-text text-transparent">จัดการบทเรียน</span>
+            </h1>
+            <p class="text-xs lg:text-sm text-gray-500 mt-1 truncate flex items-center gap-1">
+              <BookOpen :size="14" class="text-orange-500" />
+              {{ course?.title }}
+            </p>
           </div>
-          <span class="text-xl font-bold text-gray-800">LearnHub</span>
-        </router-link>
-      </div>
-
-      <nav class="p-4 space-y-2">
-        <router-link to="/dashboard" class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100 transition-all duration-200">
-          <LayoutDashboard :size="20" />
-          <span class="font-medium">แดชบอร์ด</span>
-        </router-link>
-        <router-link to="/dashboard/courses" class="flex items-center gap-3 px-4 py-3 rounded-lg bg-gradient-to-r from-primary to-orange-600 text-white transition-all duration-200">
-          <BookOpen :size="20" />
-          <span class="font-medium">คอร์สเรียนทั้งหมด</span>
-        </router-link>
-      </nav>
-
-      <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 space-y-2">
-        <button @click="handleLogout" class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100 transition-all duration-200 w-full">
-          <LogOut :size="20" />
-          <span class="font-medium">ออกจากระบบ</span>
+        </div>
+        <button @click="showCreateModal = true" class="flex items-center gap-2 px-4 lg:px-6 py-2 lg:py-3 bg-gradient-to-r from-orange-500 to-red-600 text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-orange-500/30 transition-all duration-300 text-sm lg:text-base flex-shrink-0 transform hover:-translate-y-0.5">
+          <Plus :size="20" />
+          <span class="hidden sm:inline">เพิ่มบทเรียน</span>
+          <span class="sm:hidden">เพิ่ม</span>
         </button>
       </div>
-    </aside>
+    </template>
 
-    <!-- Main Content -->
-    <div class="ml-64">
-      <header class="bg-white border-b border-gray-200 sticky top-0 z-30">
-        <div class="px-8 py-4 flex items-center justify-between">
-          <div class="flex items-center gap-4">
-            <button @click="goBack" class="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-              <ArrowLeft :size="20" />
-            </button>
-            <div>
-              <h1 class="text-2xl font-bold text-gray-800">จัดการบทเรียน</h1>
-              <p class="text-sm text-gray-500 mt-1">{{ course?.title }}</p>
-            </div>
+    <!-- Loading -->
+    <div v-if="loading" class="flex flex-col items-center justify-center py-20">
+      <div class="w-12 h-12 border-4 border-orange-200 border-t-orange-600 rounded-full animate-spin mb-4"></div>
+      <p class="text-gray-500 animate-pulse">กำลังโหลดบทเรียน...</p>
+    </div>
+
+    <!-- Lessons List -->
+    <div v-else class="space-y-6 max-w-5xl mx-auto">
+      <!-- Stats Overview (Optional) -->
+      <div v-if="lessons.length > 0" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div class="bg-white p-4 rounded-2xl border border-orange-100 shadow-sm flex items-center gap-3">
+          <div class="p-2 bg-orange-100 text-orange-600 rounded-lg">
+            <BookOpen :size="20" />
           </div>
-          <button @click="showCreateModal = true" class="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-primary to-orange-600 text-white font-semibold rounded-lg hover:shadow-lg transition-all duration-300">
-            <Plus :size="20" />
-            <span>เพิ่มบทเรียน</span>
-          </button>
+          <div>
+            <div class="text-xs text-gray-500">บทเรียนทั้งหมด</div>
+            <div class="font-bold text-gray-800">{{ lessons.length }} บท</div>
+          </div>
         </div>
-      </header>
-
-      <main class="p-8">
-        <!-- Loading -->
-        <div v-if="loading" class="text-center py-12">
-          <div class="inline-block w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+        <div class="bg-white p-4 rounded-2xl border border-orange-100 shadow-sm flex items-center gap-3">
+          <div class="p-2 bg-blue-100 text-blue-600 rounded-lg">
+            <Clock :size="20" />
+          </div>
+          <div>
+            <div class="text-xs text-gray-500">เวลารวม</div>
+            <div class="font-bold text-gray-800">{{ totalDuration }} นาที</div>
+          </div>
         </div>
+      </div>
 
-        <!-- Lessons List -->
-        <div v-else class="space-y-4">
-          <div
-            v-for="(lesson) in lessons"
-            :key="lesson.id"
-            class="bg-white rounded-xl p-6 border border-gray-200 hover:shadow-lg transition-all duration-300"
-          >
-            <div class="flex items-start gap-4">
-              <div class="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-primary to-orange-600 rounded-lg flex items-center justify-center text-white font-bold">
-                {{ lesson.order }}
-              </div>
-              <div class="flex-1">
-                <h3 class="text-lg font-bold text-gray-800 mb-2">{{ lesson.title }}</h3>
-                <p class="text-sm text-gray-600 mb-3 line-clamp-2">{{ lesson.content }}</p>
-                <div class="flex items-center gap-4 text-sm text-gray-500">
-                  <div class="flex items-center gap-1">
-                    <Clock :size="16" />
-                    <span>{{ lesson.duration || 0 }} นาที</span>
-                  </div>
-                  <div v-if="lesson.videoUrl" class="flex items-center gap-1">
-                    <Video :size="16" />
-                    <span>มีวิดีโอ</span>
-                  </div>
-                </div>
-              </div>
-              <div class="flex gap-2">
-                <button @click="manageQuizzes(lesson.id)" class="p-2 border border-green-500 text-green-600 rounded-lg hover:bg-green-500 hover:text-white transition-all duration-200" title="จัดการแบบทดสอบ">
-                  <ClipboardList :size="18" />
-                </button>
-                <button @click="manageResources(lesson)" class="p-2 border border-blue-500 text-blue-600 rounded-lg hover:bg-blue-500 hover:text-white transition-all duration-200" title="จัดการเอกสาร">
-                  <FileText :size="18" />
-                </button>
-                <button @click="editLesson(lesson)" class="p-2 border border-primary text-primary rounded-lg hover:bg-primary hover:text-white transition-all duration-200">
-                  <Edit :size="18" />
-                </button>
-                <button @click="deleteLesson(lesson.id)" class="p-2 border border-red-500 text-red-500 rounded-lg hover:bg-red-500 hover:text-white transition-all duration-200">
-                  <Trash2 :size="18" />
-                </button>
+      <div
+        v-for="(lesson, index) in lessons"
+        :key="lesson.id"
+        class="group bg-white rounded-2xl p-1 border border-gray-100 hover:border-orange-200 shadow-sm hover:shadow-xl hover:shadow-orange-500/5 transition-all duration-300"
+      >
+        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-5">
+          <!-- Order Badge -->
+          <div class="flex-shrink-0 relative">
+            <div class="w-14 h-14 bg-gradient-to-br from-orange-500 to-red-600 rounded-2xl flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-orange-500/20 group-hover:scale-110 transition-transform duration-300">
+              {{ index + 1 }}
+            </div>
+            <div class="absolute -bottom-2 -right-2 bg-white rounded-full p-1 shadow-md" v-if="lesson.videoUrl">
+              <div class="bg-green-100 text-green-600 p-1 rounded-full">
+                <Video :size="12" />
               </div>
             </div>
           </div>
 
-          <!-- Empty State -->
-          <div v-if="lessons.length === 0" class="text-center py-12">
-            <BookOpen :size="64" class="mx-auto text-gray-300 mb-4" />
-            <h3 class="text-xl font-semibold text-gray-600 mb-2">ยังไม่มีบทเรียน</h3>
-            <p class="text-gray-500 mb-6">เริ่มสร้างบทเรียนแรกของคุณเลย</p>
-            <button @click="showCreateModal = true" class="px-6 py-3 bg-gradient-to-r from-primary to-orange-600 text-white font-semibold rounded-lg hover:shadow-lg transition-all duration-300">
-              เพิ่มบทเรียน
-            </button>
+          <!-- Content -->
+          <div class="flex-1 min-w-0 space-y-2">
+            <div class="flex items-center gap-2">
+              <h3 class="text-lg font-bold text-gray-800 truncate group-hover:text-orange-600 transition-colors">
+                {{ lesson.title }}
+              </h3>
+              <span v-if="!lesson.published" class="px-2 py-0.5 bg-gray-100 text-gray-500 text-xs rounded-full border border-gray-200">แบบร่าง</span>
+            </div>
+            
+            <p class="text-sm text-gray-500 line-clamp-2 leading-relaxed">
+              {{ lesson.content }}
+            </p>
+
+            <div class="flex flex-wrap items-center gap-4 text-xs font-medium text-gray-400 pt-1">
+              <div class="flex items-center gap-1.5 bg-gray-50 px-2 py-1 rounded-md">
+                <Clock :size="14" />
+                <span>{{ lesson.duration || 0 }} นาที</span>
+              </div>
+              <div class="flex items-center gap-1.5 bg-gray-50 px-2 py-1 rounded-md">
+                <FileText :size="14" />
+                <span>{{ lesson.resources_count || 0 }} เอกสาร</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="flex items-center gap-3 w-full sm:w-auto mt-4 sm:mt-0 border-t sm:border-t-0 pt-4 sm:pt-0 justify-end">
+            <!-- Quiz Button -->
+            <div class="relative group/tooltip">
+              <button 
+                @click="manageQuizzes(lesson.id)" 
+                class="p-2.5 bg-indigo-50 text-indigo-600 rounded-xl hover:bg-indigo-500 hover:text-white hover:shadow-lg hover:shadow-indigo-200 transition-all duration-300"
+              >
+                <ClipboardList :size="20" stroke-width="2" />
+              </button>
+              <span class="absolute -top-10 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-xs py-1 px-2 rounded opacity-0 group-hover/tooltip:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
+                แบบทดสอบ
+                <span class="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-gray-800 rotate-45"></span>
+              </span>
+            </div>
+            
+            <!-- Resources Button -->
+            <div class="relative group/tooltip">
+              <button 
+                @click="manageResources(lesson)" 
+                class="p-2.5 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-500 hover:text-white hover:shadow-lg hover:shadow-blue-200 transition-all duration-300"
+              >
+                <FileText :size="20" stroke-width="2" />
+              </button>
+              <span class="absolute -top-10 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-xs py-1 px-2 rounded opacity-0 group-hover/tooltip:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
+                เอกสาร
+                <span class="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-gray-800 rotate-45"></span>
+              </span>
+            </div>
+            
+            <div class="w-px h-8 bg-gray-200 mx-1 hidden sm:block"></div>
+            
+            <!-- Edit Button -->
+            <div class="relative group/tooltip">
+              <button 
+                @click="editLesson(lesson)" 
+                class="p-2.5 bg-orange-50 text-orange-600 rounded-xl hover:bg-orange-500 hover:text-white hover:shadow-lg hover:shadow-orange-200 transition-all duration-300"
+              >
+                <Edit :size="20" stroke-width="2" />
+              </button>
+              <span class="absolute -top-10 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-xs py-1 px-2 rounded opacity-0 group-hover/tooltip:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
+                แก้ไข
+                <span class="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-gray-800 rotate-45"></span>
+              </span>
+            </div>
+            
+            <!-- Delete Button -->
+            <div class="relative group/tooltip">
+              <button 
+                @click="deleteLesson(lesson.id)" 
+                class="p-2.5 bg-red-50 text-red-600 rounded-xl hover:bg-red-500 hover:text-white hover:shadow-lg hover:shadow-red-200 transition-all duration-300"
+              >
+                <Trash2 :size="20" stroke-width="2" />
+              </button>
+              <span class="absolute -top-10 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-xs py-1 px-2 rounded opacity-0 group-hover/tooltip:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
+                ลบ
+                <span class="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-gray-800 rotate-45"></span>
+              </span>
+            </div>
           </div>
         </div>
-      </main>
+      </div>
+
+      <!-- Empty State -->
+      <div v-if="lessons.length === 0" class="text-center py-20 bg-white rounded-3xl border-2 border-dashed border-orange-100">
+        <div class="bg-orange-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 animate-bounce-slow">
+          <BookOpen :size="40" class="text-orange-500" />
+        </div>
+        <h3 class="text-2xl font-bold text-gray-800 mb-2">ยังไม่มีบทเรียน</h3>
+        <p class="text-gray-500 mb-8 max-w-sm mx-auto">เริ่มสร้างบทเรียนแรกของคุณเพื่อแบ่งปันความรู้ให้กับผู้เรียนได้เลย</p>
+        <button 
+          @click="showCreateModal = true" 
+          class="px-8 py-3 bg-gradient-to-r from-orange-500 to-red-600 text-white font-bold rounded-xl hover:shadow-xl hover:shadow-orange-500/30 transition-all duration-300 transform hover:-translate-y-1 flex items-center gap-2 mx-auto"
+        >
+          <Plus :size="20" />
+          สร้างบทเรียนแรก
+        </button>
+      </div>
     </div>
 
     <!-- Create/Edit Modal -->
-    <div v-if="showCreateModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div class="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <div class="p-6 border-b border-gray-200 flex items-center justify-between sticky top-0 bg-white">
-          <h2 class="text-2xl font-bold text-gray-800">{{ editingLesson ? 'แก้ไขบทเรียน' : 'เพิ่มบทเรียนใหม่' }}</h2>
-          <button @click="closeModal" class="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-            <X :size="24" />
+    <div v-if="showCreateModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
+      <!-- Backdrop -->
+      <div class="absolute inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity" @click="closeModal"></div>
+
+      <!-- Modal Content -->
+      <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden transform transition-all">
+        
+        <!-- Header -->
+        <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gradient-to-r from-gray-50 to-white">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+              <component :is="editingLesson ? Edit : Plus" :size="20" />
+            </div>
+            <div>
+              <h2 class="text-xl font-bold text-gray-800">{{ editingLesson ? 'แก้ไขบทเรียน' : 'เพิ่มบทเรียนใหม่' }}</h2>
+              <p class="text-xs text-gray-500">กรอกข้อมูลบทเรียนด้านล่าง</p>
+            </div>
+          </div>
+          <button @click="closeModal" class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors">
+            <X :size="20" />
           </button>
         </div>
 
-        <form @submit.prevent="saveLesson" class="p-6 space-y-5">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">ชื่อบทเรียน</label>
-            <input v-model="lessonForm.title" type="text" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-primary" placeholder="เช่น Functions และ Scope" />
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">เนื้อหา</label>
-            <textarea v-model="lessonForm.content" rows="6" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-primary" placeholder="อธิบายเนื้อหาบทเรียน..."></textarea>
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">วิดีโอ</label>
+        <!-- Scrollable Body -->
+        <div class="flex-1 overflow-y-auto p-6 custom-scrollbar">
+          <form @submit.prevent="saveLesson" class="space-y-6">
             
-            <!-- Video Preview -->
-            <div v-if="lessonForm.videoUrl || videoPreview" class="mb-3">
-              <video v-if="videoPreview || isLocalVideo(lessonForm.videoUrl)" :src="videoPreview || lessonForm.videoUrl" controls class="w-full h-64 rounded-lg border border-gray-300 bg-black"></video>
-              <iframe v-else-if="lessonForm.videoUrl" :src="getEmbedUrl(lessonForm.videoUrl)" class="w-full h-64 rounded-lg border border-gray-300" frameborder="0" allowfullscreen></iframe>
+            <!-- Title -->
+            <div class="space-y-1.5">
+              <label class="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                ชื่อบทเรียน <span class="text-red-500">*</span>
+              </label>
+              <input 
+                v-model="lessonForm.title" 
+                type="text" 
+                required 
+                class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all duration-200 outline-none placeholder:text-gray-400" 
+                placeholder="เช่น EP.1 แนะนำการใช้งานเบื้องต้น" 
+              />
             </div>
 
-            <!-- Upload Options -->
-            <div class="space-y-3">
-              <!-- File Upload -->
-              <div>
-                <label class="flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-primary transition-colors">
-                  <Upload :size="20" class="text-gray-500" />
-                  <span class="text-sm text-gray-600">{{ uploadingVideo ? 'กำลังอัปโหลด...' : 'อัปโหลดวิดีโอจากเครื่อง' }}</span>
-                  <input type="file" accept="video/*" @change="handleVideoUpload" class="hidden" :disabled="uploadingVideo" />
-                </label>
+            <!-- Content -->
+            <div class="space-y-1.5">
+              <label class="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                รายละเอียดเนื้อหา <span class="text-red-500">*</span>
+              </label>
+              <textarea 
+                v-model="lessonForm.content" 
+                rows="5" 
+                required 
+                class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all duration-200 outline-none placeholder:text-gray-400 resize-none" 
+                placeholder="อธิบายรายละเอียดของบทเรียนนี้..."
+              ></textarea>
+            </div>
+
+            <!-- Video Input -->
+            <div class="p-4 bg-gray-50 rounded-xl border border-gray-100">
+              <VideoURLInput v-model="lessonForm.videoUrl" />
+            </div>
+
+            <!-- Meta Info Grid -->
+            <div class="grid grid-cols-2 gap-6">
+              <div class="space-y-1.5">
+                <label class="text-sm font-semibold text-gray-700">ลำดับที่</label>
+                <div class="relative">
+                  <input 
+                    v-model.number="lessonForm.order" 
+                    type="number" 
+                    min="1" 
+                    required 
+                    class="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none" 
+                  />
+                  <div class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                    <ListOrdered :size="18" />
+                  </div>
+                </div>
               </div>
-
-              <!-- URL Input -->
-              <div class="relative">
-                <input v-model="lessonForm.videoUrl" type="url" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-primary" placeholder="หรือใส่ URL วิดีโอ YouTube" @input="videoPreview = null" />
+              
+              <div class="space-y-1.5">
+                <label class="text-sm font-semibold text-gray-700">ระยะเวลา (นาที)</label>
+                <div class="relative">
+                  <input 
+                    v-model.number="lessonForm.duration" 
+                    type="number" 
+                    min="0" 
+                    class="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none" 
+                  />
+                  <div class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                    <Clock :size="18" />
+                  </div>
+                </div>
               </div>
             </div>
 
-            <p class="text-xs text-gray-500 mt-2">รองรับไฟล์: MP4, AVI, MOV, WebM (ขนาดไม่เกิน 100MB) หรือ YouTube URL</p>
-          </div>
-
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">ลำดับที่</label>
-              <input v-model.number="lessonForm.order" type="number" min="1" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-primary" />
+            <!-- Error Message -->
+            <div v-if="error" class="flex items-center gap-3 p-4 bg-red-50 text-red-600 rounded-xl border border-red-100">
+              <AlertCircle :size="20" class="flex-shrink-0" />
+              <p class="text-sm">{{ error }}</p>
             </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">ระยะเวลา (นาที)</label>
-              <input v-model.number="lessonForm.duration" type="number" min="0" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-primary" />
-            </div>
-          </div>
 
-          <div v-if="error" class="p-4 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
-            {{ error }}
-          </div>
+          </form>
+        </div>
 
-          <div class="flex gap-3 pt-4">
-            <button type="button" @click="closeModal" class="flex-1 py-3 border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition-all duration-200">
-              ยกเลิก
-            </button>
-            <button type="submit" :disabled="saving" class="flex-1 py-3 bg-gradient-to-r from-primary to-orange-600 text-white font-semibold rounded-lg hover:shadow-lg transition-all duration-300 disabled:opacity-50">
-              {{ saving ? 'กำลังบันทึก...' : (editingLesson ? 'บันทึกการแก้ไข' : 'เพิ่มบทเรียน') }}
-            </button>
-          </div>
-        </form>
+        <!-- Footer -->
+        <div class="p-6 border-t border-gray-100 bg-gray-50 flex gap-3">
+          <button 
+            type="button" 
+            @click="closeModal" 
+            class="flex-1 px-6 py-2.5 text-gray-700 font-medium bg-white border border-gray-200 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all shadow-sm"
+          >
+            ยกเลิก
+          </button>
+          <button 
+            @click="saveLesson" 
+            :disabled="saving" 
+            class="flex-1 px-6 py-2.5 text-white font-medium bg-gradient-to-r from-primary to-orange-600 rounded-xl hover:shadow-lg hover:shadow-primary/30 transition-all disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          >
+            <div v-if="saving" class="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+            <span>{{ saving ? 'กำลังบันทึก...' : (editingLesson ? 'บันทึกการแก้ไข' : 'ยืนยันการเพิ่ม') }}</span>
+          </button>
+        </div>
+
       </div>
     </div>
 
@@ -243,7 +358,7 @@
         </div>
       </div>
     </div>
-  </div>
+  </DashboardLayout>
 </template>
 
 <script setup>
@@ -252,11 +367,9 @@ import { useRoute, useRouter } from 'vue-router'
 import axios from 'axios'
 import { useToast } from '../composables/useToast'
 import { useConfirm } from '../composables/useConfirm'
+import DashboardLayout from '@/components/DashboardLayout.vue'
+import VideoURLInput from '@/components/VideoURLInput.vue'
 import {
-  GraduationCap,
-  LayoutDashboard,
-  BookOpen,
-  LogOut,
   ArrowLeft,
   Plus,
   Clock,
@@ -268,7 +381,9 @@ import {
   FileText,
   Download,
   Eye,
-  ClipboardList
+  ClipboardList,
+  ListOrdered,
+  AlertCircle
 } from 'lucide-vue-next'
 
 const toast = useToast()

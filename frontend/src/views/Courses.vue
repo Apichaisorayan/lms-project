@@ -1,67 +1,18 @@
 <template>
-  <div class="min-h-screen bg-gray-50">
-    <!-- Sidebar -->
-    <aside class="fixed left-0 top-0 h-full w-64 bg-white border-r border-gray-200 z-40">
-      <div class="p-6 border-b border-gray-200">
-        <router-link to="/" class="flex items-center gap-2 group">
-          <div class="bg-gradient-to-br from-primary to-orange-600 p-2 rounded-xl">
-            <GraduationCap :size="24" class="text-white" />
-          </div>
-          <span class="text-xl font-bold text-gray-800">LearnHub</span>
-        </router-link>
-      </div>
-
-      <nav class="p-4 space-y-2">
-        <router-link to="/dashboard" class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100 transition-all duration-200">
-          <LayoutDashboard :size="20" />
-          <span class="font-medium">แดชบอร์ด</span>
-        </router-link>
-        <router-link to="/dashboard/courses" class="flex items-center gap-3 px-4 py-3 rounded-lg bg-gradient-to-r from-primary to-orange-600 text-white transition-all duration-200">
-          <BookOpen :size="20" />
-          <span class="font-medium">คอร์สเรียนทั้งหมด</span>
-        </router-link>
-        <router-link to="/dashboard/users" class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100 transition-all duration-200">
-          <Users :size="20" />
-          <span class="font-medium">ความก้าวหน้า</span>
-        </router-link>
-        <router-link to="/dashboard/certificates" class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100 transition-all duration-200">
-          <Award :size="20" />
-          <span class="font-medium">ใบประกาศนียบัตร</span>
-        </router-link>
-        <router-link to="/dashboard/calendar" class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100 transition-all duration-200">
-          <Calendar :size="20" />
-          <span class="font-medium">ปฏิทิน</span>
-        </router-link>
-      </nav>
-
-      <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 space-y-2">
-        <button class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100 transition-all duration-200 w-full">
-          <Settings :size="20" />
-          <span class="font-medium">โปรไฟล์</span>
-        </button>
-        <button @click="handleLogout" class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100 transition-all duration-200 w-full">
-          <LogOut :size="20" />
-          <span class="font-medium">ออกจากระบบ</span>
-        </button>
-      </div>
-    </aside>
-
-    <!-- Main Content -->
-    <div class="ml-64">
-      <header class="bg-white border-b border-gray-200 sticky top-0 z-30">
-        <div class="px-8 py-4 flex items-center justify-between">
-          <div>
-            <h1 class="text-2xl font-bold text-gray-800">คอร์สเรียนทั้งหมด</h1>
-            <p class="text-sm text-gray-500 mt-1">จัดการคอร์สเรียนของคุณ</p>
-          </div>
-          <button @click="showCreateModal = true" class="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-primary to-orange-600 text-white font-semibold rounded-lg hover:shadow-lg transition-all duration-300">
-            <Plus :size="20" />
-            <span>สร้างคอร์สใหม่</span>
-          </button>
+  <DashboardLayout title="คอร์สเรียนทั้งหมด" subtitle="จัดการคอร์สเรียนของคุณ">
+    <template #header>
+      <div class="flex-1 ml-4 lg:ml-0 flex items-center justify-between">
+        <div>
+          <h1 class="text-lg lg:text-2xl font-bold text-gray-800">คอร์สเรียนทั้งหมด</h1>
+          <p class="text-xs lg:text-sm text-gray-500 mt-1 hidden sm:block">จัดการคอร์สเรียนของคุณ</p>
         </div>
-      </header>
-
-      <main class="p-8">
+        <button @click="showCreateModal = true" class="flex items-center gap-2 px-4 lg:px-6 py-2 lg:py-3 bg-gradient-to-r from-primary to-orange-600 text-white font-semibold rounded-lg hover:shadow-lg transition-all duration-300 text-sm lg:text-base">
+          <Plus :size="18" />
+          <span class="hidden sm:inline">สร้างคอร์สใหม่</span>
+          <span class="sm:hidden">สร้าง</span>
+        </button>
+      </div>
+    </template>
         <!-- Filters -->
         <div class="bg-white rounded-xl p-6 border border-gray-200 mb-6">
           <div class="flex items-center gap-4">
@@ -103,11 +54,11 @@
               <div class="flex items-center justify-between text-sm mb-4">
                 <div class="flex items-center gap-2 text-gray-600">
                   <BookOpen :size="16" />
-                  <span>{{ course._count?.lessons || 0 }} บทเรียน</span>
+                  <span>{{ course.lessons_count || 0 }} บทเรียน</span>
                 </div>
                 <div class="flex items-center gap-2 text-gray-600">
                   <Users :size="16" />
-                  <span>{{ course._count?.enrollments || 0 }} คน</span>
+                  <span>{{ course.students_count || 0 }} คน</span>
                 </div>
               </div>
 
@@ -135,8 +86,6 @@
             สร้างคอร์สใหม่
           </button>
         </div>
-      </main>
-    </div>
 
     <!-- Create/Edit Modal -->
     <div v-if="showCreateModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -212,21 +161,16 @@
         </form>
       </div>
     </div>
-  </div>
+  </DashboardLayout>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { api } from '@/config/api'
+import DashboardLayout from '@/components/DashboardLayout.vue'
 import {
-  GraduationCap,
-  LayoutDashboard,
   BookOpen,
-  Users,
-  Award,
-  Calendar,
-  Settings,
   LogOut,
   Plus,
   Search,

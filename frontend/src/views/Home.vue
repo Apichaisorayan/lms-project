@@ -184,69 +184,59 @@
           <p class="text-xl text-gray-600">เลือกเรียนจากคอร์สที่ได้รับความนิยมสูงสุด</p>
         </div>
 
-        <div class="grid md:grid-cols-3 gap-8">
-          <!-- Course Card 1 -->
-          <div class="bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 group">
-            <div class="h-48 bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-              <Code :size="64" class="text-white" />
-            </div>
-            <div class="p-6">
-              <div class="flex items-center gap-2 mb-3">
-                <span class="px-3 py-1 bg-blue-100 text-blue-600 text-xs font-semibold rounded-full">Programming</span>
-                <span class="text-sm text-gray-500">⭐ 4.9</span>
-              </div>
-              <h3 class="text-xl font-bold text-gray-900 mb-2">Web Development Bootcamp</h3>
-              <p class="text-gray-600 text-sm mb-4">เรียนรู้การสร้างเว็บไซต์ตั้งแต่พื้นฐานจนถึงขั้นสูง</p>
-              <div class="flex items-center justify-between">
-                <span class="text-2xl font-bold text-primary">ฟรี</span>
-                <router-link to="/register" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-orange-600 transition-colors">
-                  เริ่มเรียน
-                </router-link>
-              </div>
-            </div>
-          </div>
+        <!-- Loading -->
+        <div v-if="loading" class="text-center py-12">
+          <div class="inline-block w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+        </div>
 
-          <!-- Course Card 2 -->
-          <div class="bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 group">
-            <div class="h-48 bg-gradient-to-br from-green-500 to-teal-600 flex items-center justify-center">
-              <Palette :size="64" class="text-white" />
+        <!-- Courses Grid -->
+        <div v-else-if="courses.length > 0" class="grid md:grid-cols-3 gap-8">
+          <div 
+            v-for="course in courses" 
+            :key="course.id"
+            class="bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 group cursor-pointer"
+            @click="viewCourse(course.id)"
+          >
+            <div class="relative h-48 bg-gradient-to-br from-blue-500 to-purple-600 overflow-hidden">
+              <img 
+                v-if="course.thumbnail" 
+                :src="course.thumbnail" 
+                :alt="course.title"
+                class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+              />
+              <div v-else class="w-full h-full flex items-center justify-center">
+                <BookOpen :size="64" class="text-white opacity-50" />
+              </div>
             </div>
             <div class="p-6">
               <div class="flex items-center gap-2 mb-3">
-                <span class="px-3 py-1 bg-green-100 text-green-600 text-xs font-semibold rounded-full">Design</span>
-                <span class="text-sm text-gray-500">⭐ 4.8</span>
+                <span class="px-3 py-1 bg-blue-100 text-blue-600 text-xs font-semibold rounded-full">คอร์สเรียน</span>
+                <span class="text-sm text-gray-500">โดย {{ course.instructor_name }}</span>
               </div>
-              <h3 class="text-xl font-bold text-gray-900 mb-2">UI/UX Design Masterclass</h3>
-              <p class="text-gray-600 text-sm mb-4">เรียนรู้การออกแบบ UI/UX แบบมืออาชีพ</p>
+              <h3 class="text-xl font-bold text-gray-900 mb-2 line-clamp-2">{{ course.title }}</h3>
+              <p class="text-gray-600 text-sm mb-4 line-clamp-2">{{ course.description || 'เรียนรู้ทักษะใหม่ๆ กับคอร์สนี้' }}</p>
               <div class="flex items-center justify-between">
-                <span class="text-2xl font-bold text-primary">ฟรี</span>
-                <router-link to="/register" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-orange-600 transition-colors">
-                  เริ่มเรียน
-                </router-link>
+                <span class="text-2xl font-bold text-primary">{{ course.price > 0 ? `฿${course.price}` : 'ฟรี' }}</span>
+                <button class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-orange-600 transition-colors">
+                  ดูรายละเอียด
+                </button>
               </div>
             </div>
           </div>
+        </div>
 
-          <!-- Course Card 3 -->
-          <div class="bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 group">
-            <div class="h-48 bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center">
-              <TrendingUp :size="64" class="text-white" />
-            </div>
-            <div class="p-6">
-              <div class="flex items-center gap-2 mb-3">
-                <span class="px-3 py-1 bg-orange-100 text-orange-600 text-xs font-semibold rounded-full">Business</span>
-                <span class="text-sm text-gray-500">⭐ 4.9</span>
-              </div>
-              <h3 class="text-xl font-bold text-gray-900 mb-2">Digital Marketing 2024</h3>
-              <p class="text-gray-600 text-sm mb-4">เรียนรู้กลยุทธ์การตลาดดิจิทัลยุคใหม่</p>
-              <div class="flex items-center justify-between">
-                <span class="text-2xl font-bold text-primary">ฟรี</span>
-                <router-link to="/register" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-orange-600 transition-colors">
-                  เริ่มเรียน
-                </router-link>
-              </div>
-            </div>
-          </div>
+        <!-- Empty State -->
+        <div v-else class="text-center py-12">
+          <BookOpen :size="64" class="mx-auto text-gray-300 mb-4" />
+          <p class="text-gray-500">ยังไม่มีคอร์สเรียน</p>
+        </div>
+
+        <!-- View All Button -->
+        <div v-if="courses.length > 0" class="text-center mt-12">
+          <router-link to="/courses" class="inline-flex items-center gap-2 px-8 py-4 bg-white border-2 border-primary text-primary font-semibold rounded-lg hover:bg-primary hover:text-white transition-all duration-300">
+            <span>ดูคอร์สทั้งหมด</span>
+            <ArrowRight :size="20" />
+          </router-link>
         </div>
 
         <div class="text-center mt-12">
@@ -343,7 +333,9 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { api } from '@/config/api'
 import { 
   GraduationCap, 
   Menu, 
@@ -360,7 +352,34 @@ import {
   TrendingUp
 } from 'lucide-vue-next'
 
+const router = useRouter()
 const mobileMenuOpen = ref(false)
+const courses = ref([])
+const loading = ref(true)
+
+onMounted(async () => {
+  await loadCourses()
+})
+
+const loadCourses = async () => {
+  try {
+    const response = await api.get('/api/courses?published=true')
+    courses.value = response.data.slice(0, 6) // แสดง 6 คอร์สแรก
+    loading.value = false
+  } catch (error) {
+    console.error('Error loading courses:', error)
+    loading.value = false
+  }
+}
+
+const viewCourse = (courseId) => {
+  const token = localStorage.getItem('token')
+  if (token) {
+    router.push(`/courses/${courseId}`)
+  } else {
+    router.push('/login')
+  }
+}
 </script>
 
 <style scoped>

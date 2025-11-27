@@ -10,8 +10,9 @@
     "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
     "build:frontend": "cd frontend && npm run build",
     "deploy:backend": "cd backend && npm run deploy",
-    "deploy:frontend": "cd frontend && npm run build",
-    "deploy": "npm run deploy:backend && npm run deploy:frontend"
+    "deploy:frontend": "cd frontend && npm run build && npx wrangler pages deploy dist --project-name=learning-platform-frontend",
+    "deploy": "npm run deploy:backend && npm run deploy:frontend",
+    "deploy:db": "cd backend && npx wrangler d1 execute learning_platform --remote --file=schema.sql"
   },
   "keywords": [
     "learning",
@@ -20,7 +21,7 @@
     "cloudflare",
     "workers"
   ],
-  "author": "Your Name",
+  "author": "Apichai Sorayan",
   "license": "MIT",
   "devDependencies": {
     "concurrently": "^8.2.2"

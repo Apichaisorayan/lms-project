@@ -1,53 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gray-50">
-    <!-- Sidebar -->
-    <aside class="fixed left-0 top-0 h-full w-64 bg-white border-r border-gray-200 z-40">
-      <div class="p-6 border-b border-gray-200">
-        <router-link to="/" class="flex items-center gap-2 group">
-          <div class="bg-gradient-to-br from-primary to-orange-600 p-2 rounded-xl">
-            <GraduationCap :size="24" class="text-white" />
-          </div>
-          <span class="text-xl font-bold text-gray-800">LearnHub</span>
-        </router-link>
-      </div>
-
-      <nav class="p-4 space-y-2">
-        <router-link to="/dashboard" class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100 transition-all duration-200">
-          <LayoutDashboard :size="20" />
-          <span class="font-medium">แดชบอร์ด</span>
-        </router-link>
-        <router-link to="/browse" class="flex items-center gap-3 px-4 py-3 rounded-lg bg-gradient-to-r from-primary to-orange-600 text-white transition-all duration-200">
-          <BookOpen :size="20" />
-          <span class="font-medium">คอร์สทั้งหมด</span>
-        </router-link>
-        <router-link to="/my-courses" class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100 transition-all duration-200">
-          <GraduationCap :size="20" />
-          <span class="font-medium">คอร์สของฉัน</span>
-        </router-link>
-        <router-link to="/certificates" class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100 transition-all duration-200">
-          <Award :size="20" />
-          <span class="font-medium">ใบประกาศ</span>
-        </router-link>
-      </nav>
-
-      <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 space-y-2">
-        <button @click="handleLogout" class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100 transition-all duration-200 w-full">
-          <LogOut :size="20" />
-          <span class="font-medium">ออกจากระบบ</span>
-        </button>
-      </div>
-    </aside>
-
-    <!-- Main Content -->
-    <div class="ml-64">
-      <header class="bg-white border-b border-gray-200 sticky top-0 z-30">
-        <div class="px-8 py-4">
-          <h1 class="text-2xl font-bold text-gray-800">สำรวจคอร์สเรียน</h1>
-          <p class="text-sm text-gray-500 mt-1">ค้นหาและลงทะเบียนคอร์สที่คุณสนใจ</p>
-        </div>
-      </header>
-
-      <main class="p-8">
+  <DashboardLayout title="สำรวจคอร์สเรียน" subtitle="ค้นหาและลงทะเบียนคอร์สที่คุณสนใจ">
         <!-- Filters -->
         <div class="bg-white rounded-xl p-6 border border-gray-200 mb-6">
           <div class="flex items-center gap-4">
@@ -121,14 +73,13 @@
           <h3 class="text-xl font-semibold text-gray-600 mb-2">ไม่พบคอร์สเรียน</h3>
           <p class="text-gray-500">ลองค้นหาด้วยคำอื่นหรือเปลี่ยนตัวกรอง</p>
         </div>
-      </main>
-    </div>
-  </div>
+  </DashboardLayout>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import DashboardLayout from '@/components/DashboardLayout.vue'
 import axios from 'axios'
 import {
   GraduationCap,
