@@ -313,7 +313,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import axios from 'axios'
+import { api } from '@/config/api'
 import {
   ChevronLeft,
   ChevronRight,
@@ -363,7 +363,7 @@ const resources = ref([])
 
 const loadResources = async (lessonId) => {
   try {
-    const response = await axios.get(`http://localhost:8787/api/lessons/${lessonId}/resources`)
+    const response = await api.get(`/api/lessons/${lessonId}/resources`)
     resources.value = response.data
   } catch (error) {
     console.error('Error loading resources:', error)
@@ -433,9 +433,7 @@ const loadCourse = async () => {
     const token = localStorage.getItem('token')
     
     // Check enrollment first
-    const enrollmentsResponse = await axios.get('http://localhost:8787/api/enrollments', {
-      headers: { Authorization: `Bearer ${token}` }
-    })
+    const enrollmentsResponse = await api.get('/api/enrollments')
     
     // Convert both to string for comparison
     const courseId = String(route.params.id)
@@ -447,9 +445,7 @@ const loadCourse = async () => {
       return
     }
     
-    const response = await axios.get(`http://localhost:8787/api/courses/${route.params.id}`, {
-      headers: { Authorization: `Bearer ${token}` }
-    })
+    const response = await api.get(`/api/courses/${route.params.id}`)
     
     course.value = response.data
     lessons.value = (response.data.lessons || []).map(l => ({
@@ -474,9 +470,7 @@ const loadCourse = async () => {
 const loadProgress = async () => {
   try {
     const token = localStorage.getItem('token')
-    const response = await axios.get(`http://localhost:8787/api/courses/${route.params.id}/progress`, {
-      headers: { Authorization: `Bearer ${token}` }
-    })
+    const response = await api.get(`/api/courses/${route.params.id}/progress`)
     progress.value = response.data
   } catch (error) {
     console.error('Error loading progress:', error)
@@ -510,11 +504,7 @@ const markAsComplete = async () => {
   
   try {
     const token = localStorage.getItem('token')
-    await axios.post(
-      `http://localhost:8787/api/lessons/${currentLesson.value.id}/complete`,
-      {},
-      { headers: { Authorization: `Bearer ${token}` } }
-    )
+    await api.post(`/api/lessons/${currentLesson.value.id}/complete`, {})
     await loadProgress()
   } catch (error) {
     console.error('Error marking lesson as complete:', error)

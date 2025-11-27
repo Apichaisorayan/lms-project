@@ -364,7 +364,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import axios from 'axios'
+import { api } from '@/config/api'
 import { useToast } from '../composables/useToast'
 import { useConfirm } from '../composables/useConfirm'
 import DashboardLayout from '@/components/DashboardLayout.vue'
@@ -422,9 +422,7 @@ onMounted(() => {
 const loadCourse = async () => {
   try {
     const token = localStorage.getItem('token')
-    const response = await axios.get(`http://localhost:8787/api/courses/${route.params.id}`, {
-      headers: { Authorization: `Bearer ${token}` }
-    })
+    const response = await api.get(`/api/courses/${route.params.id}`)
     course.value = response.data
   } catch (err) {
     console.error('Error loading course:', err)
@@ -434,9 +432,7 @@ const loadCourse = async () => {
 const loadLessons = async () => {
   try {
     const token = localStorage.getItem('token')
-    const response = await axios.get(`http://localhost:8787/api/courses/${route.params.id}/lessons`, {
-      headers: { Authorization: `Bearer ${token}` }
-    })
+    const response = await api.get(`/api/courses/${route.params.id}/lessons`)
     lessons.value = response.data
     loading.value = false
   } catch (err) {
@@ -471,9 +467,8 @@ const handleVideoUpload = async (event) => {
     const formData = new FormData()
     formData.append('video', file)
 
-    const response = await axios.post('http://localhost:8787/api/upload/video', formData, {
+    const response = await api.post('/api/upload/video', formData, {
       headers: {
-        'Authorization': `Bearer ${token}`,
         'Content-Type': 'multipart/form-data'
       }
     })
@@ -560,10 +555,10 @@ const saveLesson = async () => {
     }
 
     if (editingLesson.value) {
-      await axios.put(`http://localhost:8787/api/lessons/${editingLesson.value.id}`, lessonForm.value, config)
+      await api.put(`/api/lessons/${editingLesson.value.id}`, lessonForm.value)
       toast.success('บันทึกสำเร็จ!', 'แก้ไขบทเรียนเรียบร้อยแล้ว')
     } else {
-      await axios.post(`http://localhost:8787/api/courses/${route.params.id}/lessons`, lessonForm.value, config)
+      await api.post(`/api/courses/${route.params.id}/lessons`, lessonForm.value)
       toast.success('เพิ่มบทเรียนสำเร็จ!', 'สร้างบทเรียนใหม่เรียบร้อยแล้ว')
     }
 
@@ -587,9 +582,7 @@ const deleteLesson = async (lessonId) => {
 
   try {
     const token = localStorage.getItem('token')
-    await axios.delete(`http://localhost:8787/api/lessons/${lessonId}`, {
-      headers: { Authorization: `Bearer ${token}` }
-    })
+    await api.delete(`/api/lessons/${lessonId}`)
     await loadLessons()
     toast.success('ลบสำเร็จ', 'ลบบทเรียนเรียบร้อยแล้ว')
   } catch (err) {
@@ -616,9 +609,7 @@ const closeResourcesModal = () => {
 const loadResources = async (lessonId) => {
   try {
     const token = localStorage.getItem('token')
-    const response = await axios.get(`http://localhost:8787/api/lessons/${lessonId}/resources`, {
-      headers: { Authorization: `Bearer ${token}` }
-    })
+    const response = await api.get(`/api/lessons/${lessonId}/resources`)
     resources.value = response.data
   } catch (err) {
     console.error('Error loading resources:', err)
@@ -642,21 +633,18 @@ const handleDocumentUpload = async (event) => {
     const formData = new FormData()
     formData.append('document', file)
 
-    const uploadResponse = await axios.post('http://localhost:8787/api/upload/document', formData, {
+    const uploadResponse = await api.post('/api/upload/document', formData, {
       headers: {
-        'Authorization': `Bearer ${token}`,
         'Content-Type': 'multipart/form-data'
       }
     })
 
     // Save resource to database
-    await axios.post(`http://localhost:8787/api/lessons/${selectedLesson.value.id}/resources`, {
+    await api.post(`/api/lessons/${selectedLesson.value.id}/resources`, {
       name: uploadResponse.data.name,
       fileUrl: uploadResponse.data.url,
       fileType: uploadResponse.data.type,
       fileSize: uploadResponse.data.size
-    }, {
-      headers: { Authorization: `Bearer ${token}` }
     })
 
     await loadResources(selectedLesson.value.id)
@@ -690,9 +678,7 @@ const deleteResource = async (resourceId) => {
 
   try {
     const token = localStorage.getItem('token')
-    await axios.delete(`http://localhost:8787/api/resources/${resourceId}`, {
-      headers: { Authorization: `Bearer ${token}` }
-    })
+    await api.delete(`/api/resources/${resourceId}`)
     await loadResources(selectedLesson.value.id)
     toast.success('ลบสำเร็จ', 'ลบเอกสารเรียบร้อยแล้ว')
   } catch (err) {
