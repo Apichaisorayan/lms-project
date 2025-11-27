@@ -535,100 +535,37 @@ const goBack = () => {
 
 const viewResource = (resource) => {
   const fileUrl = resource.file_url || resource.fileUrl
+  const fileName = resource.name
+  const fileType = resource.file_type || resource.fileType || 'PDF'
   
   // Check if it's a Base64 data URL
   if (fileUrl.startsWith('data:')) {
-    // For Base64, open in new window
-    const newWindow = window.open()
-    if (newWindow) {
-      const fileType = resource.file_type || resource.fileType || 'PDF'
-      
-      // For PDF, create an embed viewer
-      if (fileUrl.startsWith('data:application/pdf')) {
-        newWindow.document.write(`
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <title>${resource.name}</title>
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <style>
-              body { margin: 0; padding: 0; overflow: hidden; }
-              iframe { width: 100vw; height: 100vh; border: none; }
-            </style>
-          </head>
-          <body>
-            <iframe src="${fileUrl}"></iframe>
-          </body>
-          </html>
-        `)
-      } else {
-        // For other file types, show download option
-        newWindow.document.write(`
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <title>${resource.name}</title>
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <style>
-              body {
-                font-family: system-ui, -apple-system, sans-serif;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
-                min-height: 100vh;
-                margin: 0;
-                padding: 1rem;
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                color: white;
-              }
-              .container {
-                text-align: center;
-                background: rgba(255, 255, 255, 0.1);
-                padding: 2rem;
-                border-radius: 1rem;
-                backdrop-filter: blur(10px);
-                max-width: 500px;
-                width: 100%;
-              }
-              h1 { margin: 0 0 1rem 0; font-size: 1.25rem; word-break: break-word; }
-              p { margin: 0 0 2rem 0; opacity: 0.9; font-size: 0.9rem; }
-              .btn {
-                display: inline-block;
-                padding: 0.75rem 2rem;
-                background: white;
-                color: #667eea;
-                text-decoration: none;
-                border-radius: 0.5rem;
-                font-weight: 600;
-                transition: transform 0.2s;
-              }
-              .btn:hover { transform: scale(1.05); }
-              .icon {
-                width: 64px;
-                height: 64px;
-                margin: 0 auto 1.5rem;
-                background: rgba(255, 255, 255, 0.2);
-                border-radius: 50%;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-size: 2rem;
-              }
-            </style>
-          </head>
-          <body>
-            <div class="container">
-              <div class="icon">📄</div>
-              <h1>${resource.name}</h1>
-              <p>ไฟล์ประเภท: ${fileType}</p>
-              <a href="${fileUrl}" download="${resource.name}" class="btn">ดาวน์โหลดไฟล์</a>
-            </div>
-          </body>
-          </html>
-        `)
+    // For PDF on mobile and desktop, try to open directly
+    if (fileUrl.startsWith('data:application/pdf')) {
+      // Create a blob URL for better mobile support
+      try {
+        const base64Data = fileUrl.split(',')[1]
+        const binaryString = atob(base64Data)
+        const bytes = new Uint8Array(binaryString.length)
+        for (let i = 0; i < binaryString.length; i++) {
+          bytes[i] = binaryString.charCodeAt(i)
+        }
+        const blob = new Blob([bytes], { type: 'application/pdf' })
+        const blobUrl = URL.createObjectURL(blob)
+        
+        // Open in new tab
+        const newWindow = window.open(blobUrl, '_blank')
+        if (!newWindow) {
+          // If popup blocked, download instead
+          downloadResource(resource)
+        }
+      } catch (error) {
+        console.error('Error creating blob:', error)
+        downloadResource(resource)
       }
-      newWindow.document.close()
+    } else {
+      // For non-PDF files, just download
+      downloadResource(resource)
     }
   } else {
     // For regular URLs, open directly
