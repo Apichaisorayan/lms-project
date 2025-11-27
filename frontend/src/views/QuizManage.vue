@@ -280,7 +280,7 @@ const loadQuizzes = async () => {
   try {
     loading.value = true;
     const token = localStorage.getItem('token');
-    const response = await fetch(`http://localhost:8787/api/lessons/${route.params.lessonId}/quizzes`, {
+    const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8787'}/api/lessons/${route.params.lessonId}/quizzes`, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
 
@@ -288,6 +288,7 @@ const loadQuizzes = async () => {
 
     quizzes.value = await response.json();
   } catch (error) {
+    console.error('Load quizzes error:', error);
     toast.error(error.message);
   } finally {
     loading.value = false;
@@ -330,35 +331,89 @@ const setCorrectChoice = (questionIndex, choiceIndex) => {
 const handleCreate = async () => {
   try {
     creating.value = true;
+    
+    // Validate questions
+    if (newQuiz.value.questions.length === 0) {
+      toast.error('กรุณาเพิ่มคำถามอย่างน้อย 1 ข้อ');
+      creating.value = false;
+      return;
+    }
+
+    // Validate each question has choices and correct answer
+    for (let i = 0; i < newQuiz.value.questions.length; i++) {
+      const q = newQuiz.value.questions[i];
+      if (!q.question || q.question.trim() === '') {
+        toast.error(`กรุณากรอกคำถามที่ ${i + 1}`);
+        creating.value = false;
+        return;
+      }
+      if (q.type === 'multiple_choice') {
+        if (!q.choices || q.choices.length < 2) {
+          toast.error(`คำถามที่ ${i + 1} ต้องมีตัวเลือกอย่างน้อย 2 ตัวเลือก`);
+          creating.value = false;
+          return;
+        }
+        const hasCorrect = q.choices.some(c => c.isCorrect || c.is_correct);
+        if (!hasCorrect) {
+          toast.error(`กรุณาเลือกคำตอบที่ถูกต้องสำหรับคำถามที่ ${i + 1}`);
+          creating.value = false;
+          return;
+        }
+      }
+    }
+
+    // Map camelCase to snake_case for backend
+    const payload = {
+      title: newQuiz.value.title,
+      description: newQuiz.value.description,
+      passing_score: newQuiz.value.passingScore,
+      time_limit: newQuiz.value.timeLimit,
+      questions: newQuiz.value.questions.map(q => ({
+        question: q.question,
+        type: q.type,
+        points: q.points,
+        order_index: q.order || 0,
+        choices: q.choices ? q.choices.map(c => ({
+          text: c.text,
+          is_correct: c.isCorrect || c.is_correct || false,
+          order_index: c.order || 0
+        })) : []
+      }))
+    };
+
     const token = localStorage.getItem('token');
-    const response = await fetch(`http://localhost:8787/api/lessons/${route.params.lessonId}/quizzes`, {
+    const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8787'}/api/lessons/${route.params.lessonId}/quizzes`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
       },
-      body: JSON.stringify(newQuiz.value)
+      body: JSON.stringify(payload)
     });
 
-    if (!response.ok) throw new Error('ไม่สามารถสร้างแบบทดสอบได้');
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || 'ไม่สามารถสร้างแบบทดสอบได้');
+    }
 
     toast.success('สร้างแบบทดสอบเรียบร้อยแล้ว');
     closeCreateForm();
     await loadQuizzes();
   } catch (error) {
-    toast.error(error.message);
+    console.error('Create quiz error:', error);
+    toast.error(error.message || 'เกิดข้อผิดพลาดในการสร้างแบบทดสอบ');
   } finally {
     creating.value = false;
   }
 };
 
 const handleDelete = async (quizId) => {
-  const confirmed = await confirm.show('คุณต้องการลบแบบทดสอบนี้หรือไม่?');
+  const confirmed = await confirm.danger('ลบแบบทดสอบนี้?', 'การดำเนินการนี้ไม่สามารถย้อนกลับได้');
   if (!confirmed) return;
 
   try {
     const token = localStorage.getItem('token');
-    const response = await fetch(`http://localhost:8787/api/quizzes/${quizId}`, {
+    const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8787'}/api/quizzes/${quizId}`, {
       method: 'DELETE',
       headers: { 'Authorization': `Bearer ${token}` }
     });
@@ -368,6 +423,7 @@ const handleDelete = async (quizId) => {
     toast.success('ลบแบบทดสอบเรียบร้อยแล้ว');
     await loadQuizzes();
   } catch (error) {
+    console.error('Delete quiz error:', error);
     toast.error(error.message);
   }
 };

@@ -162,25 +162,26 @@
                 </div>
                 
                 <div v-if="resources.length > 0" class="space-y-3">
-                  <div v-for="(resource, i) in resources" :key="i" class="flex items-center justify-between p-4 rounded-lg border hover:bg-gray-50 transition-colors group">
-                    <div class="flex items-center gap-3 flex-1 min-w-0">
-                      <div class="w-10 h-10 rounded-lg bg-orange-100 flex items-center justify-center flex-shrink-0">
-                        <FileText :size="20" class="text-primary" />
+                  <div v-for="(resource, i) in resources" :key="i" class="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 sm:p-4 rounded-lg border hover:bg-gray-50 transition-colors group gap-3">
+                    <div class="flex items-center gap-3 flex-1 min-w-0 w-full sm:w-auto">
+                      <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-orange-100 flex items-center justify-center flex-shrink-0">
+                        <FileText :size="18" class="sm:w-5 sm:h-5 text-primary" />
                       </div>
                       <div class="flex-1 min-w-0">
-                        <div class="font-medium text-gray-800 truncate">{{ resource.name }}</div>
-                        <div class="text-sm text-gray-500">{{ resource.fileType }} • {{ resource.fileSize }}</div>
+                        <div class="font-medium text-gray-800 truncate text-sm sm:text-base">{{ resource.name }}</div>
+                        <div class="text-xs sm:text-sm text-gray-500">{{ resource.file_type || resource.fileType }} • {{ resource.file_size || resource.fileSize }}</div>
                       </div>
                     </div>
-                    <div class="flex gap-2 flex-shrink-0">
-                      <a :href="resource.fileUrl" target="_blank" class="px-4 py-2 border border-blue-500 text-blue-600 rounded-lg text-sm font-medium hover:bg-blue-500 hover:text-white transition-all flex items-center gap-2">
+                    <div class="flex gap-2 w-full sm:w-auto flex-shrink-0">
+                      <button @click="viewResource(resource)" class="flex-1 sm:flex-none px-3 sm:px-4 py-2 border border-blue-500 text-blue-600 rounded-lg text-sm font-medium hover:bg-blue-500 hover:text-white transition-all flex items-center justify-center gap-2">
                         <Eye :size="16" />
-                        เปิดดู
-                      </a>
-                      <a :href="resource.fileUrl" download class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors flex items-center gap-2">
+                        <span>เปิดดู</span>
+                      </button>
+                      <button @click="downloadResource(resource)" class="flex-1 sm:flex-none px-3 sm:px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors flex items-center justify-center gap-2">
                         <Download :size="16" />
-                        ดาวน์โหลด
-                      </a>
+                        <span class="hidden sm:inline">ดาวน์โหลด</span>
+                        <span class="sm:hidden">ดาวน์</span>
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -530,6 +531,123 @@ const isLessonCompleted = (lessonId) => {
 
 const goBack = () => {
   router.push('/dashboard')
+}
+
+const viewResource = (resource) => {
+  const fileUrl = resource.file_url || resource.fileUrl
+  
+  // Check if it's a Base64 data URL
+  if (fileUrl.startsWith('data:')) {
+    // For Base64, open in new window
+    const newWindow = window.open()
+    if (newWindow) {
+      const fileType = resource.file_type || resource.fileType || 'PDF'
+      
+      // For PDF, create an embed viewer
+      if (fileUrl.startsWith('data:application/pdf')) {
+        newWindow.document.write(`
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>${resource.name}</title>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <style>
+              body { margin: 0; padding: 0; overflow: hidden; }
+              iframe { width: 100vw; height: 100vh; border: none; }
+            </style>
+          </head>
+          <body>
+            <iframe src="${fileUrl}"></iframe>
+          </body>
+          </html>
+        `)
+      } else {
+        // For other file types, show download option
+        newWindow.document.write(`
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>${resource.name}</title>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <style>
+              body {
+                font-family: system-ui, -apple-system, sans-serif;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                min-height: 100vh;
+                margin: 0;
+                padding: 1rem;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+              }
+              .container {
+                text-align: center;
+                background: rgba(255, 255, 255, 0.1);
+                padding: 2rem;
+                border-radius: 1rem;
+                backdrop-filter: blur(10px);
+                max-width: 500px;
+                width: 100%;
+              }
+              h1 { margin: 0 0 1rem 0; font-size: 1.25rem; word-break: break-word; }
+              p { margin: 0 0 2rem 0; opacity: 0.9; font-size: 0.9rem; }
+              .btn {
+                display: inline-block;
+                padding: 0.75rem 2rem;
+                background: white;
+                color: #667eea;
+                text-decoration: none;
+                border-radius: 0.5rem;
+                font-weight: 600;
+                transition: transform 0.2s;
+              }
+              .btn:hover { transform: scale(1.05); }
+              .icon {
+                width: 64px;
+                height: 64px;
+                margin: 0 auto 1.5rem;
+                background: rgba(255, 255, 255, 0.2);
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 2rem;
+              }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="icon">📄</div>
+              <h1>${resource.name}</h1>
+              <p>ไฟล์ประเภท: ${fileType}</p>
+              <a href="${fileUrl}" download="${resource.name}" class="btn">ดาวน์โหลดไฟล์</a>
+            </div>
+          </body>
+          </html>
+        `)
+      }
+      newWindow.document.close()
+    }
+  } else {
+    // For regular URLs, open directly
+    window.open(fileUrl, '_blank')
+  }
+}
+
+const downloadResource = (resource) => {
+  const fileUrl = resource.file_url || resource.fileUrl
+  const fileName = resource.name
+  
+  // Create a temporary link and trigger download
+  const link = document.createElement('a')
+  link.href = fileUrl
+  link.download = fileName
+  link.target = '_blank'
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
 }
 
 const postComment = () => {

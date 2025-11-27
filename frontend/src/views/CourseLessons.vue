@@ -304,56 +304,82 @@
     </div>
 
     <!-- Resources Modal -->
-    <div v-if="showResourcesModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div class="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <div class="p-6 border-b border-gray-200 flex items-center justify-between sticky top-0 bg-white">
-          <h2 class="text-2xl font-bold text-gray-800">เอกสารประกอบ: {{ selectedLesson?.title }}</h2>
-          <button @click="closeResourcesModal" class="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-            <X :size="24" />
+    <div v-if="showResourcesModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-3 sm:p-4">
+      <div class="bg-white rounded-xl sm:rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+        <!-- Header -->
+        <div class="p-4 sm:p-6 border-b border-gray-200 flex items-center justify-between bg-gradient-to-r from-gray-50 to-white flex-shrink-0">
+          <div class="flex-1 min-w-0 mr-3">
+            <h2 class="text-lg sm:text-2xl font-bold text-gray-800 truncate">เอกสารประกอบ</h2>
+            <p class="text-xs sm:text-sm text-gray-500 truncate mt-1">{{ selectedLesson?.title }}</p>
+          </div>
+          <button @click="closeResourcesModal" class="p-2 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0">
+            <X :size="20" class="sm:w-6 sm:h-6" />
           </button>
         </div>
 
-        <div class="p-6 space-y-4">
+        <!-- Scrollable Content -->
+        <div class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 sm:space-y-5">
           <!-- Upload Section -->
-          <div class="border-2 border-dashed border-gray-300 rounded-lg p-6">
+          <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 sm:p-6 hover:border-primary transition-colors">
             <label class="flex flex-col items-center justify-center cursor-pointer">
-              <Upload :size="48" class="text-gray-400 mb-2" />
-              <span class="text-sm text-gray-600 mb-1">{{ uploadingDoc ? 'กำลังอัปโหลด...' : 'คลิกเพื่ออัปโหลดเอกสาร' }}</span>
-              <span class="text-xs text-gray-500">รองรับ: PDF, DOC, PPT, XLS, ZIP (ไม่เกิน 50MB)</span>
-              <input type="file" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.zip,.rar" @change="handleDocumentUpload" class="hidden" :disabled="uploadingDoc" />
+              <div class="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-orange-50 flex items-center justify-center mb-3">
+                <Upload :size="24" class="sm:w-8 sm:h-8 text-primary" />
+              </div>
+              <span class="text-sm sm:text-base text-gray-700 font-medium mb-1 text-center">
+                {{ uploadingDoc ? 'กำลังอัปโหลด...' : 'คลิกเพื่ออัปโหลดเอกสาร' }}
+              </span>
+              <span class="text-xs sm:text-sm text-gray-500 text-center px-2">
+                รองรับ: PDF, DOC, PPT, XLS, ZIP (ไม่เกิน 10MB)
+              </span>
+              <input 
+                type="file" 
+                accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.zip,.rar" 
+                @change="handleDocumentUpload" 
+                class="hidden" 
+                :disabled="uploadingDoc" 
+              />
             </label>
           </div>
 
           <!-- Resources List -->
           <div v-if="resources.length > 0" class="space-y-3">
-            <h3 class="font-semibold text-gray-800">เอกสารทั้งหมด</h3>
-            <div v-for="resource in resources" :key="resource.id" class="flex items-center justify-between p-4 rounded-lg border hover:bg-gray-50 transition-colors">
-              <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-lg bg-orange-100 flex items-center justify-center">
-                  <FileText :size="20" class="text-primary" />
+            <h3 class="font-semibold text-gray-800 text-sm sm:text-base flex items-center gap-2">
+              <FileText :size="18" class="text-primary" />
+              เอกสารทั้งหมด ({{ resources.length }})
+            </h3>
+            <div v-for="resource in resources" :key="resource.id" class="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 sm:p-4 rounded-lg border hover:bg-gray-50 transition-colors gap-3">
+              <div class="flex items-center gap-3 flex-1 min-w-0 w-full sm:w-auto">
+                <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-orange-100 flex items-center justify-center flex-shrink-0">
+                  <FileText :size="18" class="sm:w-5 sm:h-5 text-primary" />
                 </div>
-                <div>
-                  <div class="font-medium text-gray-800">{{ resource.name }}</div>
-                  <div class="text-sm text-gray-500">{{ resource.fileType }} • {{ resource.fileSize }}</div>
+                <div class="flex-1 min-w-0">
+                  <div class="font-medium text-gray-800 text-sm sm:text-base truncate">{{ resource.name }}</div>
+                  <div class="text-xs sm:text-sm text-gray-500">{{ resource.file_type || resource.fileType }} • {{ resource.file_size || resource.fileSize }}</div>
                 </div>
               </div>
-              <div class="flex gap-2">
-                <a :href="resource.fileUrl" target="_blank" class="p-2 border border-blue-500 text-blue-600 rounded-lg hover:bg-blue-500 hover:text-white transition-all duration-200" title="เปิดดู">
-                  <Eye :size="18" />
-                </a>
-                <a :href="resource.fileUrl" download class="p-2 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors" title="ดาวน์โหลด">
-                  <Download :size="18" />
-                </a>
-                <button @click="deleteResource(resource.id)" class="p-2 border border-red-500 text-red-500 rounded-lg hover:bg-red-500 hover:text-white transition-all duration-200" title="ลบ">
-                  <Trash2 :size="18" />
+              <div class="flex gap-2 w-full sm:w-auto justify-end">
+                <button @click="viewResource(resource)" class="flex-1 sm:flex-none px-3 py-2 border border-blue-500 text-blue-600 rounded-lg hover:bg-blue-500 hover:text-white transition-all duration-200 text-center text-sm flex items-center justify-center gap-1.5" title="เปิดดู">
+                  <Eye :size="16" />
+                  <span class="sm:hidden">เปิด</span>
+                </button>
+                <button @click="downloadResource(resource)" class="flex-1 sm:flex-none px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors text-center text-sm flex items-center justify-center gap-1.5" title="ดาวน์โหลด">
+                  <Download :size="16" />
+                  <span class="sm:hidden">ดาวน์โหลด</span>
+                </button>
+                <button @click="deleteResource(resource.id)" class="px-3 py-2 border border-red-500 text-red-500 rounded-lg hover:bg-red-500 hover:text-white transition-all duration-200 flex items-center justify-center" title="ลบ">
+                  <Trash2 :size="16" />
                 </button>
               </div>
             </div>
           </div>
 
-          <div v-else class="text-center py-8 text-gray-500">
-            <FileText :size="48" class="mx-auto text-gray-300 mb-2" />
-            <p>ยังไม่มีเอกสารประกอบ</p>
+          <!-- Empty State -->
+          <div v-else class="text-center py-8 sm:py-12">
+            <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-3 sm:mb-4">
+              <FileText :size="32" class="sm:w-10 sm:h-10 text-gray-300" />
+            </div>
+            <p class="text-gray-500 text-sm sm:text-base">ยังไม่มีเอกสารประกอบ</p>
+            <p class="text-gray-400 text-xs sm:text-sm mt-1">อัปโหลดเอกสารเพื่อแบ่งปันกับผู้เรียน</p>
           </div>
         </div>
       </div>
@@ -624,7 +650,13 @@ const loadResources = async (lessonId) => {
   try {
     const token = localStorage.getItem('token')
     const response = await api.get(`/api/lessons/${lessonId}/resources`)
-    resources.value = response.data
+    // Normalize snake_case to camelCase
+    resources.value = response.data.map(resource => ({
+      ...resource,
+      fileUrl: resource.file_url || resource.fileUrl,
+      fileType: resource.file_type || resource.fileType,
+      fileSize: resource.file_size || resource.fileSize
+    }))
   } catch (err) {
     console.error('Error loading resources:', err)
   }
@@ -634,8 +666,29 @@ const handleDocumentUpload = async (event) => {
   const file = event.target.files[0]
   if (!file) return
 
-  if (file.size > 50 * 1024 * 1024) {
-    toast.error('ขนาดไฟล์เกินกำหนด', 'ขนาดไฟล์ต้องไม่เกิน 50MB')
+  // Validate file size (10MB for serverless)
+  if (file.size > 10 * 1024 * 1024) {
+    toast.error('ขนาดไฟล์เกินกำหนด', 'ขนาดไฟล์ต้องไม่เกิน 10MB สำหรับ serverless')
+    event.target.value = ''
+    return
+  }
+
+  // Validate file type
+  const allowedTypes = [
+    'application/pdf',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/vnd.ms-powerpoint',
+    'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    'application/vnd.ms-excel',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'application/zip',
+    'application/x-rar-compressed'
+  ]
+
+  if (!allowedTypes.includes(file.type)) {
+    toast.error('ไฟล์ไม่ถูกต้อง', 'รองรับเฉพาะ PDF, DOC, PPT, XLS, ZIP')
+    event.target.value = ''
     return
   }
 
@@ -653,12 +706,12 @@ const handleDocumentUpload = async (event) => {
       }
     })
 
-    // Save resource to database
+    // Save resource to database with snake_case
     await api.post(`/api/lessons/${selectedLesson.value.id}/resources`, {
       name: uploadResponse.data.name,
-      fileUrl: uploadResponse.data.url,
-      fileType: uploadResponse.data.type,
-      fileSize: uploadResponse.data.size
+      file_url: uploadResponse.data.url,
+      file_type: uploadResponse.data.type,
+      file_size: uploadResponse.data.size
     })
 
     await loadResources(selectedLesson.value.id)
@@ -671,6 +724,7 @@ const handleDocumentUpload = async (event) => {
       message: `เพิ่มเอกสาร "${uploadResponse.data.name}" แล้ว`
     })
   } catch (err) {
+    console.error('Upload error:', err)
     // Update loading toast to error
     toast.updateToast(loadingToastId, {
       type: 'error',
@@ -680,6 +734,120 @@ const handleDocumentUpload = async (event) => {
   } finally {
     uploadingDoc.value = false
   }
+}
+
+const viewResource = (resource) => {
+  const fileUrl = resource.file_url || resource.fileUrl
+  
+  // Check if it's a Base64 data URL
+  if (fileUrl.startsWith('data:')) {
+    // For Base64, open in new window
+    const newWindow = window.open()
+    if (newWindow) {
+      const fileType = resource.file_type || resource.fileType || 'PDF'
+      
+      // For PDF, create an embed viewer
+      if (fileUrl.startsWith('data:application/pdf')) {
+        newWindow.document.write(`
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>${resource.name}</title>
+            <style>
+              body { margin: 0; padding: 0; overflow: hidden; }
+              iframe { width: 100vw; height: 100vh; border: none; }
+            </style>
+          </head>
+          <body>
+            <iframe src="${fileUrl}"></iframe>
+          </body>
+          </html>
+        `)
+      } else {
+        // For other file types, show download option
+        newWindow.document.write(`
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>${resource.name}</title>
+            <style>
+              body {
+                font-family: system-ui, -apple-system, sans-serif;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                height: 100vh;
+                margin: 0;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+              }
+              .container {
+                text-align: center;
+                background: rgba(255, 255, 255, 0.1);
+                padding: 3rem;
+                border-radius: 1rem;
+                backdrop-filter: blur(10px);
+              }
+              h1 { margin: 0 0 1rem 0; font-size: 1.5rem; }
+              p { margin: 0 0 2rem 0; opacity: 0.9; }
+              .btn {
+                display: inline-block;
+                padding: 0.75rem 2rem;
+                background: white;
+                color: #667eea;
+                text-decoration: none;
+                border-radius: 0.5rem;
+                font-weight: 600;
+                transition: transform 0.2s;
+              }
+              .btn:hover { transform: scale(1.05); }
+              .icon {
+                width: 64px;
+                height: 64px;
+                margin: 0 auto 1.5rem;
+                background: rgba(255, 255, 255, 0.2);
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 2rem;
+              }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="icon">📄</div>
+              <h1>${resource.name}</h1>
+              <p>ไฟล์ประเภท: ${fileType}</p>
+              <a href="${fileUrl}" download="${resource.name}" class="btn">ดาวน์โหลดไฟล์</a>
+            </div>
+          </body>
+          </html>
+        `)
+      }
+      newWindow.document.close()
+    }
+  } else {
+    // For regular URLs, open directly
+    window.open(fileUrl, '_blank')
+  }
+}
+
+const downloadResource = (resource) => {
+  const fileUrl = resource.file_url || resource.fileUrl
+  const fileName = resource.name
+  
+  // Create a temporary link and trigger download
+  const link = document.createElement('a')
+  link.href = fileUrl
+  link.download = fileName
+  link.target = '_blank'
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  
+  toast.success('กำลังดาวน์โหลด', `กำลังดาวน์โหลด "${fileName}"`)
 }
 
 const deleteResource = async (resourceId) => {
