@@ -433,7 +433,12 @@ const loadLessons = async () => {
   try {
     const token = localStorage.getItem('token')
     const response = await api.get(`/api/courses/${route.params.id}/lessons`)
-    lessons.value = response.data
+    // Normalize snake_case to camelCase
+    lessons.value = response.data.map(lesson => ({
+      ...lesson,
+      videoUrl: lesson.video_url || lesson.videoUrl,
+      order: lesson.order_index || lesson.order
+    }))
     loading.value = false
   } catch (err) {
     console.error('Error loading lessons:', err)
@@ -522,11 +527,11 @@ const editLesson = (lesson) => {
   lessonForm.value = {
     title: lesson.title,
     content: lesson.content,
-    videoUrl: lesson.videoUrl || '',
-    order: lesson.order,
+    videoUrl: lesson.video_url || lesson.videoUrl || '', // รองรับทั้ง snake_case และ camelCase
+    order: lesson.order_index || lesson.order || 0,
     duration: lesson.duration || 0
   }
-  videoPreview.value = lesson.videoUrl
+  videoPreview.value = lesson.video_url || lesson.videoUrl
   showCreateModal.value = true
 }
 
@@ -554,11 +559,20 @@ const saveLesson = async () => {
       headers: { Authorization: `Bearer ${token}` }
     }
 
+    // Map camelCase to snake_case for backend
+    const payload = {
+      title: lessonForm.value.title,
+      content: lessonForm.value.content,
+      video_url: lessonForm.value.videoUrl, // ส่งเป็น snake_case
+      order_index: lessonForm.value.order,
+      duration: lessonForm.value.duration
+    }
+
     if (editingLesson.value) {
-      await api.put(`/api/lessons/${editingLesson.value.id}`, lessonForm.value)
+      await api.put(`/api/lessons/${editingLesson.value.id}`, payload)
       toast.success('บันทึกสำเร็จ!', 'แก้ไขบทเรียนเรียบร้อยแล้ว')
     } else {
-      await api.post(`/api/courses/${route.params.id}/lessons`, lessonForm.value)
+      await api.post(`/api/courses/${route.params.id}/lessons`, payload)
       toast.success('เพิ่มบทเรียนสำเร็จ!', 'สร้างบทเรียนใหม่เรียบร้อยแล้ว')
     }
 
