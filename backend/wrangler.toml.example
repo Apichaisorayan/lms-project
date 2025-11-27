@@ -1,0 +1,15 @@
+name = "learning-platform-api"
+main = "src/server.js"
+compatibility_date = "2024-01-01"
+
+# Database
+[[d1_databases]]
+binding = "DB"
+database_name = "learning_platform"
+database_id = "YOUR_DATABASE_ID_HERE"  # ⚠️ Replace with your D1 database ID
+
+# Environment variables
+# ⚠️ Copy this file to wrangler.toml and replace with your actual values!
+[vars]
+IMGBB_API_KEY = "YOUR_IMGBB_API_KEY_HERE"  # Get free API key from https://api.imgbb.com/
+JWT_SECRET = "YOUR_RANDOM_SECRET_KEY_AT_LEAST_32_CHARACTERS_LONG"  # Generate a random string

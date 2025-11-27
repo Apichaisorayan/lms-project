@@ -1059,7 +1059,18 @@ app.get('/api/instructors', async (c) => {
 
 // ==================== UPLOAD ROUTES ====================
 
-// Upload image to ImgBB
+// Helper function to convert File/Blob to Base64
+async function fileToBase64(file) {
+  const arrayBuffer = await file.arrayBuffer();
+  const bytes = new Uint8Array(arrayBuffer);
+  let binary = '';
+  for (let i = 0; i < bytes.byteLength; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary);
+}
+
+// Upload image (supports ImgBB, Cloudinary, or Base64 fallback)
 app.post('/api/upload', authMiddleware, async (c) => {
   try {
     const formData = await c.req.formData();
@@ -1069,41 +1080,150 @@ app.post('/api/upload', authMiddleware, async (c) => {
       return c.json({ error: 'No image provided' }, 400);
     }
 
-    const imgbbFormData = new FormData();
-    imgbbFormData.append('image', image);
-
-    const response = await fetch(`https://api.imgbb.com/1/upload?key=${c.env.IMGBB_API_KEY}`, {
-      method: 'POST',
-      body: imgbbFormData,
-    });
-
-    const data = await response.json();
-
-    if (!data.success) {
-      return c.json({ error: 'Upload failed' }, 500);
+    // Validate file size (5MB limit)
+    if (image.size > 5 * 1024 * 1024) {
+      return c.json({ error: 'File size must not exceed 5MB' }, 400);
     }
 
-    return c.json({ url: data.data.url });
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+    if (!allowedTypes.includes(image.type)) {
+      return c.json({ error: 'Invalid file type. Only JPG, PNG, GIF, and WebP are allowed' }, 400);
+    }
+
+    // Try ImgBB first if API key is available and valid
+    if (c.env.IMGBB_API_KEY && c.env.IMGBB_API_KEY.length > 20) {
+      try {
+        const base64 = await fileToBase64(image);
+
+        const imgbbFormData = new FormData();
+        imgbbFormData.append('image', base64);
+
+        const response = await fetch(`https://api.imgbb.com/1/upload?key=${c.env.IMGBB_API_KEY}`, {
+          method: 'POST',
+          body: imgbbFormData,
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          return c.json({
+            url: data.data.url,
+            provider: 'imgbb'
+          });
+        }
+      } catch (imgbbError) {
+        console.error('ImgBB upload failed, falling back to Base64:', imgbbError);
+      }
+    }
+
+    // Fallback to Base64 Data URL
+    const base64 = await fileToBase64(image);
+    const dataUrl = `data:${image.type};base64,${base64}`;
+
+    return c.json({
+      url: dataUrl,
+      provider: 'base64',
+      warning: 'Using Base64 encoding. For better performance, configure ImgBB or Cloudinary API key.'
+    });
+
   } catch (error) {
-    return c.json({ error: error.message }, 500);
+    console.error('Upload error:', error);
+    return c.json({ error: error.message || 'Upload failed' }, 500);
   }
 });
 
-// Upload video to R2 (placeholder - needs R2 binding)
+// Upload video (Base64 for small videos, or return URL input instruction)
 app.post('/api/upload/video', authMiddleware, async (c) => {
   try {
-    return c.json({ error: 'R2 upload not implemented yet' }, 501);
+    const formData = await c.req.formData();
+    const video = formData.get('video');
+
+    if (!video) {
+      return c.json({ error: 'No video provided' }, 400);
+    }
+
+    // For Cloudflare Workers, we recommend using YouTube URLs instead
+    // But we'll support small videos via Base64 (max 10MB)
+    if (video.size > 10 * 1024 * 1024) {
+      return c.json({
+        error: 'Video file too large. Please use YouTube URL instead.',
+        suggestion: 'Upload your video to YouTube and paste the URL in the video field.'
+      }, 400);
+    }
+
+    // Validate file type
+    const allowedTypes = ['video/mp4', 'video/webm', 'video/quicktime'];
+    if (!allowedTypes.includes(video.type)) {
+      return c.json({ error: 'Invalid video type. Only MP4, WebM, and MOV are allowed' }, 400);
+    }
+
+    // Convert to Base64
+    const base64 = await fileToBase64(video);
+    const dataUrl = `data:${video.type};base64,${base64}`;
+
+    return c.json({
+      url: dataUrl,
+      provider: 'base64',
+      warning: 'For better performance, use YouTube URLs instead of uploading large video files.'
+    });
+
   } catch (error) {
-    return c.json({ error: error.message }, 500);
+    console.error('Video upload error:', error);
+    return c.json({ error: error.message || 'Video upload failed' }, 500);
   }
 });
 
-// Upload document to R2 (placeholder - needs R2 binding)
+// Upload document (Base64 for documents)
 app.post('/api/upload/document', authMiddleware, async (c) => {
   try {
-    return c.json({ error: 'R2 upload not implemented yet' }, 501);
+    const formData = await c.req.formData();
+    const document = formData.get('document');
+
+    if (!document) {
+      return c.json({ error: 'No document provided' }, 400);
+    }
+
+    // Validate file size (10MB limit for documents)
+    if (document.size > 10 * 1024 * 1024) {
+      return c.json({ error: 'Document size must not exceed 10MB' }, 400);
+    }
+
+    // Validate file type
+    const allowedTypes = [
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/vnd.ms-powerpoint',
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+      'application/vnd.ms-excel',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'application/zip',
+      'application/x-rar-compressed'
+    ];
+
+    if (!allowedTypes.includes(document.type)) {
+      return c.json({ error: 'Invalid document type' }, 400);
+    }
+
+    // Convert to Base64
+    const base64 = await fileToBase64(document);
+    const dataUrl = `data:${document.type};base64,${base64}`;
+
+    // Get file extension
+    const extension = document.name.split('.').pop();
+
+    return c.json({
+      url: dataUrl,
+      name: document.name,
+      type: extension.toUpperCase(),
+      size: `${(document.size / 1024).toFixed(2)} KB`,
+      provider: 'base64'
+    });
+
   } catch (error) {
-    return c.json({ error: error.message }, 500);
+    console.error('Document upload error:', error);
+    return c.json({ error: error.message || 'Document upload failed' }, 500);
   }
 });
 

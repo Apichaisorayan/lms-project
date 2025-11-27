@@ -39,6 +39,7 @@ lerna-debug.log*
 # Wrangler
 .wrangler/
 .mf/
+wrangler.toml  # Contains API keys and secrets
 
 # OS
 Thumbs.db
