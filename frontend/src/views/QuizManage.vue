@@ -1,28 +1,39 @@
 <template>
-  <div class="min-h-screen bg-orange-50 py-8">
-    <div class="max-w-7xl mx-auto px-6">
+  <div class="min-h-screen bg-gradient-to-br from-purple-600 via-pink-500 to-orange-500 py-8 relative overflow-hidden">
+    <!-- Animated Background Shapes -->
+    <div class="absolute inset-0 overflow-hidden pointer-events-none">
+      <div class="absolute top-20 left-10 w-72 h-72 bg-white/10 rounded-full blur-3xl animate-pulse"></div>
+      <div class="absolute bottom-20 right-10 w-96 h-96 bg-yellow-300/10 rounded-full blur-3xl animate-pulse" style="animation-delay: 1s"></div>
+      <div class="absolute top-1/2 left-1/3 w-64 h-64 bg-blue-300/10 rounded-full blur-3xl animate-pulse" style="animation-delay: 2s"></div>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 relative z-10">
       <!-- Header -->
-      <div class="mb-8">
-        <div class="flex justify-between items-start">
-          <div>
-            <div class="flex items-center gap-3 mb-2">
-              <svg class="w-10 h-10 text-orange-600" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M19 2H5c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-7 2h2v2h-2V4zm0 4h2v2h-2V8zm-4-4h2v2H8V4zm0 4h2v2H8V8zM6 4h2v2H6V4zm0 4h2v2H6V8zm0 12v-2h2v2H6zm2-4H6v-2h2v2zm0-4H6v-2h2v2zm10 8h-8v-2h8v2zm0-4h-8v-2h8v2zm0-4h-8v-2h8v2zm0-4h-8V6h8v2z"/>
-              </svg>
-              <div>
-                <h1 class="text-3xl font-bold text-orange-900">LMS Quiz Creator</h1>
-                <p class="text-orange-600 text-sm mt-1">Create and manage your learning quizzes</p>
+      <div class="mb-8 animate-fade-in">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div class="flex items-center gap-4">
+            <div class="relative">
+              <div class="absolute inset-0 bg-white/30 rounded-2xl blur-xl"></div>
+              <div class="relative bg-white p-3 rounded-2xl shadow-2xl transform hover:scale-110 transition-transform duration-300">
+                <svg class="w-10 h-10 text-purple-600" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M19 2H5c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-7 2h2v2h-2V4zm0 4h2v2h-2V8zm-4-4h2v2H8V4zm0 4h2v2H8V8zM6 4h2v2H6V4zm0 4h2v2H6V8zm0 12v-2h2v2H6zm2-4H6v-2h2v2zm0-4H6v-2h2v2zm10 8h-8v-2h8v2zm0-4h-8v-2h8v2zm0-4h-8v-2h8v2zm0-4h-8V6h8v2z"/>
+                </svg>
               </div>
+            </div>
+            <div>
+              <h1 class="text-3xl sm:text-4xl font-black text-white drop-shadow-lg">🎯 Quiz Creator</h1>
+              <p class="text-white/90 text-sm sm:text-base mt-1 font-medium">สร้างแบบทดสอบสุดสนุก!</p>
             </div>
           </div>
           <button
             @click="showCreateForm = true"
-            class="bg-orange-600 hover:bg-orange-700 text-white px-6 py-3 rounded-lg transition-colors flex items-center gap-2 font-semibold shadow-md"
+            class="group relative bg-white text-purple-600 px-6 py-3 rounded-2xl font-bold shadow-2xl hover:shadow-purple-500/50 transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 flex items-center gap-2 w-full sm:w-auto justify-center"
           >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            <div class="absolute inset-0 bg-gradient-to-r from-yellow-400 to-orange-400 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <svg class="w-5 h-5 relative z-10 group-hover:rotate-90 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4" />
             </svg>
-            Create Quiz
+            <span class="relative z-10 group-hover:text-white transition-colors">สร้างแบบทดสอบ</span>
           </button>
         </div>
       </div>
@@ -41,40 +52,56 @@
           :quiz="quiz"
           :can-delete="true"
           @delete="handleDelete"
+          @start="startQuiz"
         />
       </div>
 
       <!-- Empty State -->
-      <div v-else class="bg-white rounded-2xl shadow-sm border border-orange-100 p-20 text-center">
-        <div class="mb-8">
-          <svg class="w-32 h-32 text-orange-400 mx-auto" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M19 2H5c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-7 2h2v2h-2V4zm0 4h2v2h-2V8zm-4-4h2v2H8V4zm0 4h2v2H8V8zM6 4h2v2H6V4zm0 4h2v2H6V8zm0 12v-2h2v2H6zm2-4H6v-2h2v2zm0-4H6v-2h2v2zm10 8h-8v-2h8v2zm0-4h-8v-2h8v2zm0-4h-8v-2h8v2zm0-4h-8V6h8v2z"/>
-          </svg>
+      <div v-else class="relative">
+        <div class="absolute inset-0 bg-white/10 backdrop-blur-sm rounded-3xl"></div>
+        <div class="relative bg-white/95 rounded-3xl shadow-2xl p-12 sm:p-20 text-center transform hover:scale-105 transition-all duration-500">
+          <div class="mb-8 animate-bounce">
+            <div class="inline-block p-6 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full shadow-2xl">
+              <svg class="w-20 h-20 text-white" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M19 2H5c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-7 2h2v2h-2V4zm0 4h2v2h-2V8zm-4-4h2v2H8V4zm0 4h2v2H8V8zM6 4h2v2H6V4zm0 4h2v2H6V8zm0 12v-2h2v2H6zm2-4H6v-2h2v2zm0-4H6v-2h2v2zm10 8h-8v-2h8v2zm0-4h-8v-2h8v2zm0-4h-8v-2h8v2zm0-4h-8V6h8v2z"/>
+              </svg>
+            </div>
+          </div>
+          <h3 class="text-3xl sm:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 mb-4">ยังไม่มีแบบทดสอบ! 🎮</h3>
+          <p class="text-gray-600 mb-8 text-lg sm:text-xl font-medium">มาสร้างแบบทดสอบแรกกันเถอะ!</p>
+          <button
+            @click="showCreateForm = true"
+            class="group relative bg-gradient-to-r from-purple-600 via-pink-500 to-orange-500 text-white px-10 py-4 rounded-2xl font-black text-lg shadow-2xl hover:shadow-purple-500/50 transition-all duration-300 transform hover:scale-110 hover:-translate-y-2 inline-flex items-center gap-3"
+          >
+            <svg class="w-6 h-6 group-hover:rotate-180 transition-transform duration-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4" />
+            </svg>
+            <span>สร้างแบบทดสอบแรก</span>
+            <span class="text-2xl">🚀</span>
+          </button>
         </div>
-        <h3 class="text-2xl font-bold text-orange-900 mb-3">No quizzes yet</h3>
-        <p class="text-orange-600 mb-8 text-lg">Get started by creating your first quiz</p>
-        <button
-          @click="showCreateForm = true"
-          class="bg-orange-600 hover:bg-orange-700 text-white px-8 py-3 rounded-lg transition-colors font-semibold shadow-md inline-flex items-center gap-2"
-        >
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-          </svg>
-          Create Your First Quiz
-        </button>
       </div>
 
       <!-- Create Quiz Modal -->
-      <div v-if="showCreateForm" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 p-4">
-        <div class="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
-          <div class="sticky top-0 bg-white border-b border-orange-100 p-6 flex justify-between items-center">
-            <h2 class="text-2xl font-bold text-orange-900">Create New Quiz</h2>
-            <button @click="closeCreateForm" class="text-gray-400 hover:text-gray-600 p-2 rounded-lg transition-colors">
+      <div v-if="showCreateForm" class="fixed inset-0 bg-gradient-to-br from-purple-900/80 via-pink-900/80 to-orange-900/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
+        <div class="bg-white rounded-3xl max-w-4xl w-full max-h-[90vh] overflow-hidden shadow-2xl transform animate-scale-in">
+          <div class="sticky top-0 bg-gradient-to-r from-purple-600 via-pink-500 to-orange-500 p-6 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+              <div class="bg-white/20 p-2 rounded-xl backdrop-blur-sm">
+                <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M19 2H5c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-7 2h2v2h-2V4zm0 4h2v2h-2V8zm-4-4h2v2H8V4zm0 4h2v2H8V8zM6 4h2v2H6V4zm0 4h2v2H6V8zm0 12v-2h2v2H6zm2-4H6v-2h2v2zm0-4H6v-2h2v2zm10 8h-8v-2h8v2zm0-4h-8v-2h8v2zm0-4h-8v-2h8v2zm0-4h-8V6h8v2z"/>
+                </svg>
+              </div>
+              <h2 class="text-2xl font-black text-white drop-shadow-lg">✨ สร้างแบบทดสอบใหม่</h2>
+            </div>
+            <button @click="closeCreateForm" class="text-white/80 hover:text-white hover:bg-white/20 p-2 rounded-xl transition-all duration-200 transform hover:rotate-90">
               <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
           </div>
+          
+          <div class="overflow-y-auto max-h-[calc(90vh-80px)]">
 
           <div class="p-6">
             <!-- Quiz Info -->
@@ -221,21 +248,26 @@
             </div>
 
             <!-- Actions -->
-            <div class="flex justify-end gap-3 pt-6 border-t border-gray-200">
+            <div class="flex flex-col sm:flex-row justify-end gap-3 pt-6 border-t border-gray-200 sticky bottom-0 bg-white p-6 -mx-6 -mb-6 rounded-b-3xl">
               <button
                 @click="closeCreateForm"
-                class="px-6 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+                class="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-all font-bold transform hover:scale-105"
               >
-                Cancel
+                ยกเลิก
               </button>
               <button
                 @click="handleCreate"
                 :disabled="creating || !isValidQuiz"
-                class="px-6 py-2.5 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium shadow-md"
+                class="group relative px-8 py-3 bg-gradient-to-r from-purple-600 via-pink-500 to-orange-500 text-white rounded-xl font-black shadow-2xl hover:shadow-purple-500/50 transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none overflow-hidden"
               >
-                {{ creating ? 'Creating...' : 'Create Quiz' }}
+                <div class="absolute inset-0 bg-gradient-to-r from-yellow-400 to-orange-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <span class="relative z-10 flex items-center justify-center gap-2">
+                  <span v-if="creating" class="inline-block w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                  <span>{{ creating ? 'กำลังสร้าง...' : 'สร้างแบบทดสอบ 🎯' }}</span>
+                </span>
               </button>
             </div>
+          </div>
           </div>
         </div>
       </div>
@@ -245,12 +277,13 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { useToast } from '../composables/useToast';
 import { useConfirm } from '../composables/useConfirm';
 import QuizCard from '../components/QuizCard.vue';
 
 const route = useRoute();
+const router = useRouter();
 const toast = useToast();
 const confirm = useConfirm();
 
@@ -405,6 +438,10 @@ const handleCreate = async () => {
   } finally {
     creating.value = false;
   }
+};
+
+const startQuiz = (quizId) => {
+  router.push({ name: 'QuizTake', params: { quizId } });
 };
 
 const handleDelete = async (quizId) => {

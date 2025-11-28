@@ -162,25 +162,24 @@
                 </div>
                 
                 <div v-if="resources.length > 0" class="space-y-3">
-                  <div v-for="(resource, i) in resources" :key="i" class="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 sm:p-4 rounded-lg border hover:bg-gray-50 transition-colors group gap-3">
-                    <div class="flex items-center gap-3 flex-1 min-w-0 w-full sm:w-auto">
+                  <div v-for="(resource, i) in resources" :key="i" class="flex flex-col p-3 sm:p-4 rounded-lg border hover:bg-gray-50 transition-colors group gap-3">
+                    <div class="flex items-start gap-3 w-full">
                       <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-orange-100 flex items-center justify-center flex-shrink-0">
                         <FileText :size="18" class="sm:w-5 sm:h-5 text-primary" />
                       </div>
                       <div class="flex-1 min-w-0">
-                        <div class="font-medium text-gray-800 truncate text-sm sm:text-base">{{ resource.name }}</div>
-                        <div class="text-xs sm:text-sm text-gray-500">{{ resource.file_type || resource.fileType }} • {{ resource.file_size || resource.fileSize }}</div>
+                        <div class="font-medium text-gray-800 text-sm sm:text-base break-words">{{ resource.name }}</div>
+                        <div class="text-xs sm:text-sm text-gray-500 mt-1">{{ resource.file_type || resource.fileType }} • {{ resource.file_size || resource.fileSize }}</div>
                       </div>
                     </div>
-                    <div class="flex gap-2 w-full sm:w-auto flex-shrink-0">
-                      <button @click="viewResource(resource)" class="flex-1 sm:flex-none px-3 sm:px-4 py-2 border border-blue-500 text-blue-600 rounded-lg text-sm font-medium hover:bg-blue-500 hover:text-white transition-all flex items-center justify-center gap-2">
+                    <div class="flex gap-2 w-full">
+                      <button @click="viewResource(resource)" class="flex-1 px-3 sm:px-4 py-2 border border-blue-500 text-blue-600 rounded-lg text-sm font-medium hover:bg-blue-500 hover:text-white transition-all flex items-center justify-center gap-2">
                         <Eye :size="16" />
                         <span>เปิดดู</span>
                       </button>
-                      <button @click="downloadResource(resource)" class="flex-1 sm:flex-none px-3 sm:px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors flex items-center justify-center gap-2">
+                      <button @click="downloadResource(resource)" class="flex-1 px-3 sm:px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors flex items-center justify-center gap-2">
                         <Download :size="16" />
-                        <span class="hidden sm:inline">ดาวน์โหลด</span>
-                        <span class="sm:hidden">ดาวน์</span>
+                        <span>ดาวน์โหลด</span>
                       </button>
                     </div>
                   </div>
@@ -189,6 +188,70 @@
                 <div v-else class="text-center py-12">
                   <FileText :size="48" class="mx-auto text-gray-300 mb-4" />
                   <p class="text-gray-500">ยังไม่มีเอกสารประกอบ</p>
+                </div>
+              </div>
+
+              <!-- Quizzes Tab -->
+              <div v-show="activeTab === 'quizzes'" class="space-y-4">
+                <div>
+                  <h3 class="text-lg font-bold text-gray-800 mb-2 flex items-center gap-2">
+                    <span>🎯</span>
+                    <span>แบบทดสอบ</span>
+                  </h3>
+                  <p class="text-sm text-gray-500 mb-4">ทดสอบความเข้าใจของคุณ</p>
+                </div>
+                
+                <div v-if="quizzes.length > 0" class="space-y-3">
+                  <div v-for="quiz in quizzes" :key="quiz.id" class="group relative">
+                    <!-- Glow Effect -->
+                    <div class="absolute -inset-1 bg-gradient-to-r from-purple-600 via-pink-500 to-orange-500 rounded-2xl blur-lg opacity-20 group-hover:opacity-40 transition-opacity duration-500"></div>
+                    
+                    <!-- Card Content -->
+                    <div class="relative bg-white rounded-2xl shadow-lg p-4 sm:p-5 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border-2 border-transparent hover:border-purple-200">
+                      <div class="flex items-start justify-between mb-3">
+                        <div class="flex-1 min-w-0">
+                          <div class="flex items-center gap-2 mb-2">
+                            <span class="text-xl sm:text-2xl">🎯</span>
+                            <h4 class="text-base sm:text-lg font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 truncate">{{ quiz.title }}</h4>
+                          </div>
+                          <p v-if="quiz.description" class="text-xs sm:text-sm text-gray-600 line-clamp-2 mb-3">{{ quiz.description }}</p>
+                        </div>
+                      </div>
+
+                      <div class="grid grid-cols-2 gap-2 mb-4">
+                        <div class="flex items-center gap-2 bg-purple-50 px-3 py-2 rounded-xl">
+                          <span class="text-base sm:text-lg">❓</span>
+                          <span class="text-xs sm:text-sm font-bold text-purple-700">{{ quiz.questions?.length || 0 }} คำถาม</span>
+                        </div>
+                        <div class="flex items-center gap-2 bg-green-50 px-3 py-2 rounded-xl">
+                          <span class="text-base sm:text-lg">✅</span>
+                          <span class="text-xs sm:text-sm font-bold text-green-700">ผ่าน {{ quiz.passing_score || quiz.passingScore }}%</span>
+                        </div>
+                        <div v-if="quiz.time_limit || quiz.timeLimit" class="col-span-2 flex items-center gap-2 bg-orange-50 px-3 py-2 rounded-xl">
+                          <span class="text-base sm:text-lg">⏱️</span>
+                          <span class="text-xs sm:text-sm font-bold text-orange-700">{{ quiz.time_limit || quiz.timeLimit }} นาที</span>
+                        </div>
+                      </div>
+
+                      <button
+                        @click="startQuiz(quiz.id)"
+                        class="group/btn relative w-full bg-gradient-to-r from-purple-600 via-pink-500 to-orange-500 text-white py-2.5 sm:py-3 px-4 sm:px-6 rounded-xl font-black shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-105 overflow-hidden text-sm sm:text-base"
+                      >
+                        <div class="absolute inset-0 bg-gradient-to-r from-yellow-400 to-orange-400 opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300"></div>
+                        <span class="relative z-10 flex items-center justify-center gap-2">
+                          <span>🎮 เริ่มทำแบบทดสอบ</span>
+                        </span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                
+                <div v-else class="text-center py-12">
+                  <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-purple-100 flex items-center justify-center mx-auto mb-4">
+                    <span class="text-3xl sm:text-4xl">🎯</span>
+                  </div>
+                  <p class="text-gray-500 text-sm sm:text-base">ยังไม่มีแบบทดสอบ</p>
+                  <p class="text-gray-400 text-xs sm:text-sm mt-1">ผู้สอนยังไม่ได้สร้างแบบทดสอบสำหรับบทเรียนนี้</p>
                 </div>
               </div>
 
@@ -360,7 +423,8 @@ const newComment = ref('')
 const tabs = [
   { id: 'overview', label: 'ภาพรวม' },
   { id: 'resources', label: 'เอกสารประกอบ' },
-  { id: 'comments', label: 'คำถาม & คำตอบ' }
+  { id: 'comments', label: 'คำถาม & คำตอบ' },
+  { id: 'quizzes', label: 'แบบทดสอบ' }
 ]
 
 const learningObjectives = computed(() => {
@@ -374,6 +438,7 @@ const learningObjectives = computed(() => {
 })
 
 const resources = ref([])
+const quizzes = ref([])
 
 const loadResources = async (lessonId) => {
   try {
@@ -381,6 +446,15 @@ const loadResources = async (lessonId) => {
     resources.value = response.data
   } catch (error) {
     console.error('Error loading resources:', error)
+  }
+}
+
+const loadQuizzes = async (lessonId) => {
+  try {
+    const response = await api.get(`/api/lessons/${lessonId}/quizzes`)
+    quizzes.value = response.data
+  } catch (error) {
+    console.error('Error loading quizzes:', error)
   }
 }
 const comments = ref([])
@@ -472,6 +546,7 @@ const loadCourse = async () => {
       currentLesson.value = lessons.value[0]
       currentLessonIndex.value = 0
       await loadResources(lessons.value[0].id)
+      await loadQuizzes(lessons.value[0].id)
     }
     
     loading.value = false
@@ -495,6 +570,7 @@ const selectLesson = async (lesson) => {
   currentLesson.value = lesson
   currentLessonIndex.value = lessons.value.findIndex(l => l.id === lesson.id)
   await loadResources(lesson.id)
+  await loadQuizzes(lesson.id)
 }
 
 const previousLesson = async () => {
@@ -502,6 +578,7 @@ const previousLesson = async () => {
     currentLessonIndex.value--
     currentLesson.value = lessons.value[currentLessonIndex.value]
     await loadResources(currentLesson.value.id)
+    await loadQuizzes(currentLesson.value.id)
   }
 }
 
@@ -510,7 +587,12 @@ const nextLesson = async () => {
     currentLessonIndex.value++
     currentLesson.value = lessons.value[currentLessonIndex.value]
     await loadResources(currentLesson.value.id)
+    await loadQuizzes(currentLesson.value.id)
   }
+}
+
+const startQuiz = (quizId) => {
+  router.push({ name: 'QuizTake', params: { quizId } })
 }
 
 const markAsComplete = async () => {

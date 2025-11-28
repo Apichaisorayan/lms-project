@@ -592,6 +592,37 @@ app.post('/api/lessons/:lessonId/quizzes', authMiddleware, requireRole('INSTRUCT
   }
 });
 
+// Get single quiz with questions and choices
+app.get('/api/quizzes/:id', authMiddleware, async (c) => {
+  try {
+    const quizId = c.req.param('id');
+
+    const quiz = await c.env.DB.prepare('SELECT * FROM quizzes WHERE id = ?').bind(quizId).first();
+
+    if (!quiz) {
+      return c.json({ error: 'Quiz not found' }, 404);
+    }
+
+    // Get questions with choices
+    const { results: questions } = await c.env.DB.prepare(
+      'SELECT * FROM questions WHERE quiz_id = ? ORDER BY order_index'
+    ).bind(quizId).all();
+
+    for (const question of questions) {
+      const { results: choices } = await c.env.DB.prepare(
+        'SELECT * FROM choices WHERE question_id = ? ORDER BY order_index'
+      ).bind(question.id).all();
+      question.choices = choices;
+    }
+
+    quiz.questions = questions;
+
+    return c.json(quiz);
+  } catch (error) {
+    return c.json({ error: error.message }, 500);
+  }
+});
+
 // Delete quiz
 app.delete('/api/quizzes/:id', authMiddleware, requireRole('INSTRUCTOR', 'ADMIN'), async (c) => {
   try {
