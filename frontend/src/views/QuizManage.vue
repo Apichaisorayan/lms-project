@@ -125,9 +125,53 @@
               ></textarea>
             </div>
 
+            <!-- Quiz Type Selection -->
+            <div class="mb-6">
+              <label class="block text-sm font-semibold text-gray-700 mb-3">ประเภทแบบทดสอบ</label>
+              <div class="grid grid-cols-2 gap-3">
+                <label 
+                  class="relative flex items-center p-4 border-2 rounded-xl cursor-pointer transition-all duration-300 transform hover:scale-105"
+                  :class="newQuiz.quizType === 'pre' ? 'border-blue-500 bg-blue-50 shadow-lg' : 'border-gray-300 hover:border-blue-300'"
+                >
+                  <input
+                    type="radio"
+                    v-model="newQuiz.quizType"
+                    value="pre"
+                    class="w-5 h-5 text-blue-600 focus:ring-blue-500"
+                  />
+                  <div class="ml-3">
+                    <div class="flex items-center gap-2">
+                      <span class="text-xl">📝</span>
+                      <span class="font-bold text-gray-800">Pre-test</span>
+                    </div>
+                    <p class="text-xs text-gray-600 mt-1">ทดสอบก่อนเรียน</p>
+                  </div>
+                </label>
+                
+                <label 
+                  class="relative flex items-center p-4 border-2 rounded-xl cursor-pointer transition-all duration-300 transform hover:scale-105"
+                  :class="newQuiz.quizType === 'post' ? 'border-green-500 bg-green-50 shadow-lg' : 'border-gray-300 hover:border-green-300'"
+                >
+                  <input
+                    type="radio"
+                    v-model="newQuiz.quizType"
+                    value="post"
+                    class="w-5 h-5 text-green-600 focus:ring-green-500"
+                  />
+                  <div class="ml-3">
+                    <div class="flex items-center gap-2">
+                      <span class="text-xl">✅</span>
+                      <span class="font-bold text-gray-800">Post-test</span>
+                    </div>
+                    <p class="text-xs text-gray-600 mt-1">ทดสอบหลังเรียน</p>
+                  </div>
+                </label>
+              </div>
+            </div>
+
             <div class="grid grid-cols-2 gap-4 mb-6">
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Passing Score (%)</label>
+                <label class="block text-sm font-medium text-gray-700 mb-2">คะแนนผ่าน (%)</label>
                 <input
                   v-model.number="newQuiz.passingScore"
                   type="number"
@@ -137,13 +181,13 @@
                 />
               </div>
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Time Limit (minutes)</label>
+                <label class="block text-sm font-medium text-gray-700 mb-2">เวลา (นาที)</label>
                 <input
                   v-model.number="newQuiz.timeLimit"
                   type="number"
                   min="0"
                   class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                  placeholder="No limit"
+                  placeholder="ไม่จำกัด"
                 />
               </div>
             </div>
@@ -298,6 +342,7 @@ const newQuiz = ref({
   description: '',
   passingScore: 70,
   timeLimit: null,
+  quizType: 'post', // 'pre' or 'post'
   questions: []
 });
 
@@ -401,6 +446,7 @@ const handleCreate = async () => {
       description: newQuiz.value.description,
       passing_score: newQuiz.value.passingScore,
       time_limit: newQuiz.value.timeLimit,
+      quiz_type: newQuiz.value.quizType,
       questions: newQuiz.value.questions.map(q => ({
         question: q.question,
         type: q.type,
@@ -472,6 +518,7 @@ const closeCreateForm = () => {
     description: '',
     passingScore: 70,
     timeLimit: null,
+    quizType: 'post',
     questions: []
   };
 };

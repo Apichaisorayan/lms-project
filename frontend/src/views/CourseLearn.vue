@@ -192,16 +192,18 @@
               </div>
 
               <!-- Quizzes Tab -->
-              <div v-show="activeTab === 'quizzes'" class="space-y-4">
-                <div>
-                  <h3 class="text-lg font-bold text-gray-800 mb-2 flex items-center gap-2">
-                    <span>🎯</span>
-                    <span>แบบทดสอบ</span>
-                  </h3>
-                  <p class="text-sm text-gray-500 mb-4">ทดสอบความเข้าใจของคุณ</p>
-                </div>
-                
-                <div v-if="quizzes.length > 0" class="space-y-3">
+              <div v-show="activeTab === 'quizzes'" class="space-y-6">
+                <!-- Pre-test Section -->
+                <div v-if="preTestQuizzes.length > 0">
+                  <div class="flex items-center gap-2 mb-4">
+                    <div class="flex items-center gap-2 bg-blue-100 px-4 py-2 rounded-xl">
+                      <span class="text-2xl">📝</span>
+                      <h3 class="text-lg font-bold text-blue-800">Pre-test (ทดสอบก่อนเรียน)</h3>
+                    </div>
+                  </div>
+                  <p class="text-sm text-gray-600 mb-4">ทดสอบความรู้เดิมของคุณก่อนเริ่มเรียน</p>
+                  
+                  <div class="space-y-3">
                   <div v-for="quiz in quizzes" :key="quiz.id" class="group relative">
                     <!-- Glow Effect -->
                     <div class="absolute -inset-1 bg-gradient-to-r from-purple-600 via-pink-500 to-orange-500 rounded-2xl blur-lg opacity-20 group-hover:opacity-40 transition-opacity duration-500"></div>
@@ -210,9 +212,21 @@
                     <div class="relative bg-white rounded-2xl shadow-lg p-4 sm:p-5 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border-2 border-transparent hover:border-purple-200">
                       <div class="flex items-start justify-between mb-3">
                         <div class="flex-1 min-w-0">
-                          <div class="flex items-center gap-2 mb-2">
+                          <div class="flex items-center gap-2 mb-2 flex-wrap">
                             <span class="text-xl sm:text-2xl">🎯</span>
-                            <h4 class="text-base sm:text-lg font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 truncate">{{ quiz.title }}</h4>
+                            <h4 class="text-base sm:text-lg font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600">{{ quiz.title }}</h4>
+                            <span 
+                              v-if="quiz.quiz_type === 'pre'"
+                              class="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-bold rounded-full flex items-center gap-1"
+                            >
+                              📝 Pre-test
+                            </span>
+                            <span 
+                              v-else
+                              class="px-2 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full flex items-center gap-1"
+                            >
+                              ✅ Post-test
+                            </span>
                           </div>
                           <p v-if="quiz.description" class="text-xs sm:text-sm text-gray-600 line-clamp-2 mb-3">{{ quiz.description }}</p>
                         </div>
@@ -233,20 +247,78 @@
                         </div>
                       </div>
 
-                      <button
-                        @click="startQuiz(quiz.id)"
-                        class="group/btn relative w-full bg-gradient-to-r from-purple-600 via-pink-500 to-orange-500 text-white py-2.5 sm:py-3 px-4 sm:px-6 rounded-xl font-black shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-105 overflow-hidden text-sm sm:text-base"
-                      >
-                        <div class="absolute inset-0 bg-gradient-to-r from-yellow-400 to-orange-400 opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300"></div>
-                        <span class="relative z-10 flex items-center justify-center gap-2">
-                          <span>🎮 เริ่มทำแบบทดสอบ</span>
-                        </span>
-                      </button>
+                        <button
+                          @click="startQuiz(quiz.id)"
+                          class="group/btn relative w-full bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 text-white py-2.5 sm:py-3 px-4 sm:px-6 rounded-xl font-black shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-105 overflow-hidden text-sm sm:text-base"
+                        >
+                          <div class="absolute inset-0 bg-gradient-to-r from-cyan-400 to-blue-400 opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300"></div>
+                          <span class="relative z-10 flex items-center justify-center gap-2">
+                            <span>📝 เริ่มทำ Pre-test</span>
+                          </span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Post-test Section -->
+                <div v-if="postTestQuizzes.length > 0">
+                  <div class="flex items-center gap-2 mb-4">
+                    <div class="flex items-center gap-2 bg-green-100 px-4 py-2 rounded-xl">
+                      <span class="text-2xl">✅</span>
+                      <h3 class="text-lg font-bold text-green-800">Post-test (ทดสอบหลังเรียน)</h3>
+                    </div>
+                  </div>
+                  <p class="text-sm text-gray-600 mb-4">ทดสอบความเข้าใจหลังจากเรียนจบแล้ว</p>
+                  
+                  <div class="space-y-3">
+                    <div v-for="quiz in postTestQuizzes" :key="quiz.id" class="group relative">
+                      <!-- Glow Effect -->
+                      <div class="absolute -inset-1 bg-gradient-to-r from-green-600 via-emerald-500 to-teal-500 rounded-2xl blur-lg opacity-20 group-hover:opacity-40 transition-opacity duration-500"></div>
+                      
+                      <!-- Card Content -->
+                      <div class="relative bg-white rounded-2xl shadow-lg p-4 sm:p-5 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border-2 border-transparent hover:border-green-200">
+                        <div class="flex items-start justify-between mb-3">
+                          <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2 mb-2 flex-wrap">
+                              <span class="text-xl sm:text-2xl">🎯</span>
+                              <h4 class="text-base sm:text-lg font-black text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-emerald-600">{{ quiz.title }}</h4>
+                            </div>
+                            <p v-if="quiz.description" class="text-xs sm:text-sm text-gray-600 line-clamp-2 mb-3">{{ quiz.description }}</p>
+                          </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2 mb-4">
+                          <div class="flex items-center gap-2 bg-purple-50 px-3 py-2 rounded-xl">
+                            <span class="text-base sm:text-lg">❓</span>
+                            <span class="text-xs sm:text-sm font-bold text-purple-700">{{ quiz.questions?.length || 0 }} คำถาม</span>
+                          </div>
+                          <div class="flex items-center gap-2 bg-green-50 px-3 py-2 rounded-xl">
+                            <span class="text-base sm:text-lg">✅</span>
+                            <span class="text-xs sm:text-sm font-bold text-green-700">ผ่าน {{ quiz.passing_score || quiz.passingScore }}%</span>
+                          </div>
+                          <div v-if="quiz.time_limit || quiz.timeLimit" class="col-span-2 flex items-center gap-2 bg-orange-50 px-3 py-2 rounded-xl">
+                            <span class="text-base sm:text-lg">⏱️</span>
+                            <span class="text-xs sm:text-sm font-bold text-orange-700">{{ quiz.time_limit || quiz.timeLimit }} นาที</span>
+                          </div>
+                        </div>
+
+                        <button
+                          @click="startQuiz(quiz.id)"
+                          class="group/btn relative w-full bg-gradient-to-r from-green-600 via-emerald-500 to-teal-500 text-white py-2.5 sm:py-3 px-4 sm:px-6 rounded-xl font-black shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-105 overflow-hidden text-sm sm:text-base"
+                        >
+                          <div class="absolute inset-0 bg-gradient-to-r from-teal-400 to-green-400 opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300"></div>
+                          <span class="relative z-10 flex items-center justify-center gap-2">
+                            <span>✅ เริ่มทำ Post-test</span>
+                          </span>
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
                 
-                <div v-else class="text-center py-12">
+                <!-- Empty State -->
+                <div v-if="quizzes.length === 0" class="text-center py-12">
                   <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-purple-100 flex items-center justify-center mx-auto mb-4">
                     <span class="text-3xl sm:text-4xl">🎯</span>
                   </div>
@@ -441,6 +513,14 @@ const learningObjectives = computed(() => {
 
 const resources = ref([])
 const quizzes = ref([])
+
+const preTestQuizzes = computed(() => {
+  return quizzes.value.filter(q => q.quiz_type === 'pre')
+})
+
+const postTestQuizzes = computed(() => {
+  return quizzes.value.filter(q => q.quiz_type === 'post' || !q.quiz_type)
+})
 
 const loadResources = async (lessonId) => {
   try {

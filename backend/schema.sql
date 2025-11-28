@@ -56,6 +56,7 @@ CREATE TABLE IF NOT EXISTS quizzes (
   description TEXT,
   passing_score INTEGER DEFAULT 70,
   time_limit INTEGER,
+  quiz_type TEXT DEFAULT 'post',
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (lesson_id) REFERENCES lessons(id) ON DELETE CASCADE

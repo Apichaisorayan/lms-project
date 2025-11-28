@@ -546,9 +546,20 @@ app.post('/api/lessons/:lessonId/quizzes', authMiddleware, requireRole('INSTRUCT
     }
 
     // Create quiz
-    const quizResult = await c.env.DB.prepare(
-      'INSERT INTO quizzes (lesson_id, title, description, passing_score, time_limit) VALUES (?, ?, ?, ?, ?)'
-    ).bind(lessonId, title, description, passing_score, time_limit).run();
+    // Try to insert with quiz_type, fallback if column doesn't exist
+    let quizResult;
+    try {
+      const quiz_type = body.quiz_type || 'post';
+      quizResult = await c.env.DB.prepare(
+        'INSERT INTO quizzes (lesson_id, title, description, passing_score, time_limit, quiz_type) VALUES (?, ?, ?, ?, ?, ?)'
+      ).bind(lessonId, title, description, passing_score, time_limit, quiz_type).run();
+    } catch (error) {
+      // Fallback if quiz_type column doesn't exist yet
+      console.log('Fallback: Creating quiz without quiz_type column');
+      quizResult = await c.env.DB.prepare(
+        'INSERT INTO quizzes (lesson_id, title, description, passing_score, time_limit) VALUES (?, ?, ?, ?, ?)'
+      ).bind(lessonId, title, description, passing_score, time_limit).run();
+    }
 
     const quizId = quizResult.meta.last_row_id;
 
