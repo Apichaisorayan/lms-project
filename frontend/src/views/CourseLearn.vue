@@ -33,7 +33,7 @@
 
     <!-- Main Content -->
     <div class="container mx-auto px-3 sm:px-4 py-3 sm:py-6">
-      <div class="grid lg:grid-cols-[1fr_380px] xl:grid-cols-[1fr_400px] gap-3 sm:gap-6">
+      <div class="flex flex-col lg:grid lg:grid-cols-[1fr_380px] xl:grid-cols-[1fr_400px] gap-3 sm:gap-6">
         <!-- Video & Content Section -->
         <div class="space-y-3 sm:space-y-6">
           <!-- Video Player -->
@@ -388,7 +388,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { api } from '@/config/api'
 import {
@@ -419,6 +419,8 @@ const progress = ref([])
 const loading = ref(true)
 const activeTab = ref('overview')
 const newComment = ref('')
+const showLessonsList = ref(false)
+const isMobile = ref(window.innerWidth < 1024)
 
 const tabs = [
   { id: 'overview', label: 'ภาพรวม' },
@@ -514,6 +516,17 @@ const isCompleted = computed(() => {
 onMounted(async () => {
   await loadCourse()
   await loadProgress()
+  
+  // Handle window resize
+  window.addEventListener('resize', () => {
+    isMobile.value = window.innerWidth < 1024
+  })
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', () => {
+    isMobile.value = window.innerWidth < 1024
+  })
 })
 
 const loadCourse = async () => {
